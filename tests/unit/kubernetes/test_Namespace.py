@@ -2,10 +2,11 @@ import os
 from unittest import TestCase
 
 from dotenv import load_dotenv
+
+from osbot_k8s.kubernetes.Cluster import Cluster
+from osbot_k8s.kubernetes.Namespace import Namespace
 from osbot_utils.utils.Misc import  random_id
 
-from k8_kubernetes.kubernetes.Cluster import Cluster
-from k8_kubernetes.kubernetes.Namespace import Namespace
 from osbot_utils.utils.Files import file_exists
 
 
@@ -19,7 +20,8 @@ class test_Namespace(TestCase):
         self._           = Namespace(name             =self.name, cluster    =self.cluster    )
 
     def test__init__(self):
-        assert file_exists(self.config_file)
+        if self.config_file is not None:
+            assert file_exists(self.config_file)
         assert self._.name == self.name
 
     #def test_create(self):

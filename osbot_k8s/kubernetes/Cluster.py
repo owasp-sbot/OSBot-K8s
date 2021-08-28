@@ -3,8 +3,7 @@ import warnings
 from kubernetes import config, client
 from kubernetes.client import ApiClient, CoreV1Api, AppsV1Api
 
-from k8_kubernetes.kubernetes.Namespace                import Namespace
-from k8_kubernetes.kubernetes.Pod                      import Pod
+from osbot_k8s.kubernetes.Namespace import Namespace
 from osbot_utils.decorators.lists.group_by          import group_by
 from osbot_utils.decorators.lists.index_by          import index_by
 from osbot_utils.decorators.methods.cache_on_self   import cache_on_self
@@ -13,27 +12,40 @@ from osbot_utils.utils.Misc                         import ignore_warning__unclo
 
 class Cluster:
 
-    def __init__(self, default_namespace='default', config_file=None):
+    def __init__(self, default_namespace='default', config_file=None, config_context=None):
         ignore_warning__unclosed_ssl()
         self.default_namespace   = Namespace(name=default_namespace, cluster=self)
         self.config_file         = config_file
+        self.config_context      = config_context
 
     @cache_on_self
-    def api_apps(self) -> AppsV1Api:
+    def api_apps_v1(self) -> AppsV1Api:
         self.load_config()
         return client.AppsV1Api()
 
     @cache_on_self
-    def api_core(self) -> CoreV1Api:
+    def api_core_v1(self) -> CoreV1Api:
         self.load_config()
         return client.CoreV1Api()
 
+    def convert_k8s_list_to_dict(self, target):
+        items = []                                                      # do this so that we have easy to manipulate python objects
+        for item in target:   # and there doesn't seem to be any advantage of actually using the kubernetes API Resource class (for example methods to use those resources)
+            items.append(item.to_dict())
+        return items
+
+    @index_by
+    @group_by
+    def api_resources(self):
+        return self.convert_k8s_list_to_dict(self.api_apps_v1().get_api_resources().resources)
+
     def info(self):
-        return self.api_core().list_config_map_for_all_namespaces()
+        data = self.api_core_v1().list_config_map_for_all_namespaces()      # todo, see if we need to have a separate set of functions for list_config_map
+        return self.convert_k8s_list_to_dict(data.items)
 
     def load_config(self):
         try:
-            config.load_kube_config(config_file=self.config_file)
+            config.load_kube_config(config_file=self.config_file, context=self.config_context)
             return True
         except Exception as error:
             print(error)
@@ -56,10 +68,10 @@ class Cluster:
         return [item.metadata.name for item in self.namespaces_raw()]
 
     def namespaces_raw(self):
-        return self.api_core().list_namespace().items
+        return self.api_core_v1().list_namespace().items
 
     def pod(self, name):
-        from k8_kubernetes.kubernetes.Pod import Pod                                               # circular reference
+        from osbot_k8s.kubernetes.Pod import Pod            # todo - refactor to remove circular reference issue
         return Pod(name=name, cluster=self)
 
     def pod_create(self, name, manifest):
@@ -70,6 +82,7 @@ class Cluster:
     @index_by
     @group_by
     def pods(self):
+        from osbot_k8s.kubernetes.Pod import Pod  # todo - refactor to remove circular reference issue
         pods = []
         for item in self.pods_raw():
             pod = Pod(item.metadata.name, cluster=self)
@@ -77,8 +90,9 @@ class Cluster:
         return pods
 
     def pods_all(self):
+        from osbot_k8s.kubernetes.Pod import Pod  # todo - refactor to remove circular reference issue
         pods = []
-        pods_data = self.api_core().list_pod_for_all_namespaces(watch=False)
+        pods_data = self.api_core_v1().list_pod_for_all_namespaces(watch=False)
         for item in pods_data.items:
             pods.append(Pod(item.metadata.name, cluster=self))
         return pods
@@ -93,7 +107,7 @@ class Cluster:
         return self.pods_in_phase('Pending')
 
     def pods_raw(self):
-        return self.api_core().list_namespaced_pod(namespace=self.namespace().name).items
+        return self.api_core_v1().list_namespaced_pod(namespace=self.namespace().name).items
 
     def set_default_namespace(self, name):
         self.default_namespace = Namespace(name)

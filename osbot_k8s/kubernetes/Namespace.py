@@ -14,7 +14,7 @@ class Namespace:
             return status_error(message=f"namespace already existed: {self.name}")
         try:
             manifest = client.V1Namespace(metadata=client.V1ObjectMeta(name=self.name))
-            result = self.cluster.api_core().create_namespace(manifest)
+            result = self.cluster.api_core_v1().create_namespace(manifest)
         except Exception as exception:
             return status_error(data=exception)
 
@@ -22,7 +22,7 @@ class Namespace:
 
     def delete(self):
         if self.exists():
-            result = self.cluster.api_core().delete_namespace(name=self.name)
+            result = self.cluster.api_core_v1().delete_namespace(name=self.name)
             return status_ok(message="namespace deleted", data=result)
         return status_warning(message="namespace already existed")
 
@@ -46,7 +46,7 @@ class Namespace:
 
     def info_raw(self):
         try:
-            return self.cluster.api_core().read_namespace(name=self.name)
+            return self.cluster.api_core_v1().read_namespace(name=self.name)
         except:
             return None
 

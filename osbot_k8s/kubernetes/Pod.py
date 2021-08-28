@@ -13,7 +13,7 @@ class Pod:
 
     @cache_on_self
     def api_core(self):
-        return self.cluster.api_core()
+        return self.cluster.api_core_v1()
 
     def create(self, manifest):
         try:

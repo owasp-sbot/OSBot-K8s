@@ -1,14 +1,16 @@
 import os
 from unittest import TestCase
 
+import pytest
 from dotenv import load_dotenv
 from pytest import skip
 
 from osbot_utils.utils.Files import file_not_exists
 
-from k8_kubernetes.kubernetes.Ssh import Ssh
+from osbot_k8s.kubernetes.Ssh import Ssh
 
 
+@pytest.mark.skip('needs live server')           # todo add to test setup the creation of pods and nodes we can SSH into
 class test_Ssh(TestCase):
 
     def setUp(self) -> None:
