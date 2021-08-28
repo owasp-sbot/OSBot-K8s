@@ -1,0 +1,8 @@
+python-dotenv
+pyyaml
+kubernetes
+
+# for development
+pytest
+pytest-cov
+coveralls
