@@ -10,7 +10,7 @@ from pytest import skip
 
 from osbot_k8s.kubernetes.Cluster import Cluster
 from osbot_utils.utils.Files import path_combine, file_exists
-from osbot_utils.utils.Yaml import yaml_load
+from osbot_utils.utils.Yaml import yaml_load, yaml_parse
 
 DEFAULT_DOCKER_DESKTOP_NAME = 'docker-desktop'
 DEFAULT_DOCKER_DESKTOP_HOST = 'https://kubernetes.docker.internal:6443'
@@ -130,6 +130,221 @@ class test_Cluster(TestCase):
                                                               'replicasets', 'replicasets/scale', 'replicasets/status',
                                                               'statefulsets', 'statefulsets/scale', 'statefulsets/status']
 
+    def test_config_maps(self):
+        for item in self.cluster.config_maps():
+            assert list_set(item) == ['api_version', 'binary_data', 'data', 'immutable', 'kind', 'metadata']
+            assert item.get('api_version') == None
+            assert item.get('binary_data') == None
+            assert item.get('immutable'  ) == None
+            assert item.get('kind'       ) == None
+            #assert item.get('metadata'   ) == None
+
+            assert list_set(item.get('data')) in [['ca.crt'                                                                         ],
+                                                  ['jws-kubeconfig-abcdef', 'kubeconfig'                                            ],
+                                                  ['Corefile'                                                                       ],
+                                                  ['client-ca-file', 'requestheader-allowed-names', 'requestheader-client-ca-file',
+                                                   'requestheader-extra-headers-prefix', 'requestheader-group-headers',
+                                                   'requestheader-username-headers'                                                 ],
+                                                  ['config.conf', 'kubeconfig.conf'                                                 ],
+                                                  ['ClusterConfiguration', 'ClusterStatus'                                          ],
+                                                  ['kubelet'                                                                        ],
+                                                  ['prometheus.yaml'                                                                ],
+                                                  ['alertmanager.rules.yaml', 'etcd3.rules.yaml', 'general.rules.yaml',
+                                                   'kube-state-metrics.rules.yaml', 'kubelet.rules.yaml',
+                                                   'kubernetes.rules.yaml', 'node.rules.yaml', 'prometheus.rules.yaml'              ]]
+
+        # confirm that every entry in config_map.ata is the same
+        config_maps_data = {}
+        for config_map in self.cluster.config_maps():
+            for data_name, data_value in config_map.get('data').items():
+                if config_maps_data.get(data_name) is None:                    # only add if it doesn't exist
+                    config_maps_data[data_name] = data_value
+                else:
+                    assert config_maps_data[data_name] == data_value           # if it exists, it should be the same
+
+    def test_config_maps_data(self):
+        data = self.cluster.config_maps_data()
+        assert list_set(data) == [ 'ClusterConfiguration',  'ClusterStatus',  'Corefile',
+                                   'alertmanager.rules.yaml',  'ca.crt',  'client-ca-file',  'config.conf',
+                                   'etcd3.rules.yaml',  'general.rules.yaml',  'jws-kubeconfig-abcdef',
+                                   'kube-state-metrics.rules.yaml',  'kubeconfig',  'kubeconfig.conf',
+                                   'kubelet',  'kubelet.rules.yaml',  'kubernetes.rules.yaml',  'node.rules.yaml',
+                                   'prometheus.rules.yaml',  'prometheus.yaml',  'requestheader-allowed-names',
+                                   'requestheader-client-ca-file',  'requestheader-extra-headers-prefix',
+                                   'requestheader-group-headers',  'requestheader-username-headers']
+
+        assert yaml_parse(data.get('ClusterConfiguration')) == {  'apiServer'           : { 'extraArgs'             : { 'authorization-mode'      : 'Node,RBAC'      ,
+                                                                                                                        'enable-admission-plugins': 'NodeRestriction',
+                                                                                                                        'watch-cache'             : 'false'         },
+                                                                                            'timeoutForControlPlane': '4m0s'},
+                                                                  'apiVersion'          : 'kubeadm.k8s.io/v1beta2',
+                                                                  'certificatesDir'     : '/run/config/pki',
+                                                                  'clusterName'         : 'kubernetes',
+                                                                  'controlPlaneEndpoint': 'vm.docker.internal:6443',
+                                                                  'controllerManager'   : { 'extraArgs': {  'horizontal-pod-autoscaler-sync-period' : '60s'     ,
+                                                                                                            'leader-elect'                          : 'false'   ,
+                                                                                                            'node-monitor-grace-period'             : '180s'    ,
+                                                                                                            'node-monitor-period'                   : '30s'     ,
+                                                                                                            'pvclaimbinder-sync-period'             : '60s'     }},
+                                                                  'dns'                 : {'type': 'CoreDNS'                    },
+                                                                  'etcd'                : {'local': {'dataDir': '/var/lib/etcd'}},
+                                                                  'imageRepository'     : 'k8s.gcr.io'                           ,
+                                                                  'kind'                : 'ClusterConfiguration'                 ,
+                                                                  'kubernetesVersion'   : 'v1.21.2'                              ,
+                                                                  'networking'          : {'dnsDomain': 'cluster.local', 'serviceSubnet': '10.96.0.0/12'},
+                                                                  'scheduler'           : {}}
+
+        assert list_set(yaml_parse(data.get('ClusterStatus'))) == ['apiEndpoints', 'apiVersion', 'kind']
+        assert data.get('Corefile')  == ('.:53 {\n'             # this is in a weird non-json or non-yaml core-dns format https://coredns.io/2017/07/23/corefile-explained/
+                                         '    errors\n'
+                                         '    health {\n'
+                                         '       lameduck 5s\n'
+                                         '    }\n'
+                                         '    ready\n'
+                                         '    kubernetes cluster.local in-addr.arpa ip6.arpa {\n'
+                                         '       pods insecure\n'
+                                         '       fallthrough in-addr.arpa ip6.arpa\n'
+                                         '       ttl 30\n'
+                                         '    }\n'
+                                         '    prometheus :9153\n'
+                                         '    forward . /etc/resolv.conf {\n'
+                                         '       max_concurrent 1000\n'
+                                         '    }\n'
+                                         '    cache 30\n'
+                                         '    loop\n'
+                                         '    reload\n'
+                                         '    loadbalance\n'
+                                         '}\n')
+        assert yaml_parse(data.get('alertmanager.rules.yaml')) == { 'groups': [ { 'name': 'alertmanager.rules',
+                'rules': [ { 'alert'        : 'AlertmanagerConfigInconsistent',
+                             'annotations'  : { 'description': 'The configuration of the instances of the Alertmanager cluster `{{$labels.service}}` are out of sync.'},
+                             'expr'         : 'count_values("config_hash", alertmanager_config_hash) BY (service) / ON(service) GROUP_LEFT() label_replace(prometheus_operator_alertmanager_spec_replicas, "service", "alertmanager-$1", "alertmanager", "(.*)") != 1',
+                             'for'          : '5m',
+                             'labels'       : {'severity': 'critical'}},
+                           { 'alert'        : 'AlertmanagerDownOrMissing',
+                             'annotations'  : { 'description': 'An unexpected number of Alertmanagers are scraped or Alertmanagers disappeared from discovery.'},
+                             'expr'         : 'label_replace(prometheus_operator_alertmanager_spec_replicas, "job", "alertmanager-$1", "alertmanager", "(.*)") / ON(job) GROUP_RIGHT() sum(up) BY (job) != 1',
+                             'for'          : '5m',
+                             'labels'       : {'severity': 'warning'}},
+                           { 'alert'        : 'AlertmanagerFailedReload',
+                             'annotations'  : { 'description': "Reloading Alertmanager's configuration has failed for {{ $labels.namespace }}/{{ $labels.pod}}."},
+                             'expr'         : 'alertmanager_config_last_reload_successful == 0',
+                             'for'          : '10m',
+                             'labels'       : {'severity': 'warning'}}]}]}
+
+        assert data.get('ca.crt'        ).startswith('-----BEGIN CERTIFICATE-----\n')
+        assert data.get('client-ca-file').startswith('-----BEGIN CERTIFICATE-----\n')
+        assert data.get('ca.crt'        ) == data.get('client-ca-file')                 # interesting that these values are the same
+
+        assert yaml_parse(data.get('config.conf')) == { 'apiVersion'            : 'kubeproxy.config.k8s.io/v1alpha1',
+                                                        'bindAddress'           : '0.0.0.0' ,
+                                                        'bindAddressHardFail'   : False     ,
+                                                        'clientConnection'      : {'acceptContentTypes' : ''                                    ,
+                                                                                   'burst'              : 10                                    ,
+                                                                                   'contentType'        : 'application/vnd.kubernetes.protobuf' ,
+                                                                                   'kubeconfig'         : '/var/lib/kube-proxy/kubeconfig.conf' ,
+                                                                                   'qps': 5},
+                                                        'clusterCIDR'           : '',
+                                                        'configSyncPeriod'      : '15m0s',
+                                                        'conntrack'             : {'maxPerCore'             : 0         ,
+                                                                                   'min'                    : 0         ,
+                                                                                   'tcpCloseWaitTimeout'    : '1h0m0s'  ,
+                                                                                   'tcpEstablishedTimeout'  : '24h0m0s' },
+                                                        'detectLocalMode'       : ''             ,
+                                                        'enableProfiling'       : False          ,
+                                                        'healthzBindAddress'    : '0.0.0.0:10256',
+                                                        'hostnameOverride'      : ''             ,
+                                                        'iptables'              : {'masqueradeAll'  : False ,
+                                                                                   'masqueradeBit'  : 14    ,
+                                                                                   'minSyncPeriod'  : '0s'  ,
+                                                                                   'syncPeriod'     : '30s' },
+                                                        'ipvs'                  : {'excludeCIDRs'   : None  ,
+                                                                                   'minSyncPeriod'  : '0s'  ,
+                                                                                   'scheduler'      : ''    ,
+                                                                                   'strictARP'      : False ,
+                                                                                   'syncPeriod'     : '30s' ,
+                                                                                   'tcpFinTimeout'  : '0s'  ,
+                                                                                   'tcpTimeout'     : '0s'  ,
+                                                                                   'udpTimeout'     : '0s'  },
+                                                        'kind'                  : 'KubeProxyConfiguration',
+                                                        'metricsBindAddress'    : '127.0.0.1:10249',
+                                                        'mode'                  : '',
+                                                        'nodePortAddresses'     : None,
+                                                        'oomScoreAdj'           : -999,
+                                                        'portRange'             : '',
+                                                        'showHiddenMetricsForVersion': '',
+                                                        'udpIdleTimeout'        : '250ms',
+                                                        'winkernel'             : {'enableDSR': False, 'networkName': '', 'sourceVip': ''}}
+        assert yaml_parse(data.get('etcd3.rules.yaml')) == {'groups': [{'name': './etcd3.rules',
+                                                            'rules': [{'alert'      : 'InsufficientMembers',
+                                                                       'annotations': {'description': 'If one more etcd member goes down the cluster will be unavailable',
+                                                                                       'summary'    : 'etcd cluster insufficient members'},
+                                                                       'expr'       : 'count(up{job="etcd"} == 0) > (count(up{job="etcd"}) / 2 - 1)',
+                                                                       'for'        : '3m',
+                                                                       'labels'     : {'severity': 'critical'}},
+                                                                      {'alert'      : 'NoLeader',
+                                                                       'annotations': {'description': 'etcd member {{ $labels.instance }} has no leader',
+                                                                                       'summary'    : 'etcd member has no leader'},
+                                                                       'expr'       : 'etcd_server_has_leader{job="etcd"} == 0',
+                                                                       'for'        : '1m',
+                                                                       'labels'     : {'severity': 'critical'}},
+                                                                      {'alert'      : 'HighNumberOfLeaderChanges',
+                                                                       'annotations': {'description': 'etcd instance {{ $labels.instance }} has seen {{ $value }} leader changes within the last hour',
+                                                                                       'summary'    : 'a high number of leader changes within the etcd cluster are happening'},
+                                                                       'expr'       : 'increase(etcd_server_leader_changes_seen_total{job="etcd"}[1h]) > 3',
+                                                                       'labels'     : {'severity': 'warning'}},
+                                                                      {'alert'      : 'GRPCRequestsSlow',
+                                                                       'annotations': {'description': 'on etcd instance {{ $labels.instance }} gRPC requests to {{ $labels.grpc_method }} are slow',
+                                                                                       'summary'    : 'slow gRPC requests'},
+                                                                       'expr'       : 'histogram_quantile(0.99, sum(rate(grpc_server_handling_seconds_bucket{job="etcd",grpc_type="unary"}[5m])) by (grpc_service, grpc_method, le)) > 0.15',
+                                                                       'for'        : '10m',
+                                                                       'labels'     : {'severity': 'critical'}},
+                                                                      {'alert'      : 'HighNumberOfFailedHTTPRequests',
+                                                                       'annotations': {'description': '{{ $value }}% of requests for {{ $labels.method }} failed on etcd instance {{ $labels.instance }}',
+                                                                                       'summary'    : 'a high number of HTTP requests are failing'},
+                                                                       'expr'       : 'sum(rate(etcd_http_failed_total{job="etcd"}[5m])) BY (method) / sum(rate(etcd_http_received_total{job="etcd"}[5m])) BY (method) > 0.01',
+                                                                       'for'        : '10m',
+                                                                       'labels'     : {'severity': 'warning'}},
+                                                                      {'alert'      : 'HighNumberOfFailedHTTPRequests',
+                                                                       'annotations': {'description': '{{ $value }}% of requests for {{ $labels.method }} failed on etcd instance {{ $labels.instance }}',
+                                                                                       'summary'    : 'a high number of HTTP requests are failing'},
+                                                                       'expr'       : 'sum(rate(etcd_http_failed_total{job="etcd"}[5m])) BY (method) / sum(rate(etcd_http_received_total{job="etcd"}[5m])) BY (method) > 0.05',
+                                                                       'for'        : '5m',
+                                                                       'labels' : {'severity': 'critical'}},
+                                                                      {'alert'      : 'HTTPRequestsSlow',
+                                                                       'annotations': {'description': 'on etcd instance {{ $labels.instance }} HTTP requests to {{ $labels.method }} are slow',
+                                                                                       'summary'    : 'slow HTTP requests'},
+                                                                       'expr'       : 'histogram_quantile(0.99, rate(etcd_http_successful_duration_seconds_bucket[5m])) > 0.15',
+                                                                       'for'        : '10m',
+                                                                       'labels'     : {'severity': 'warning'}},
+                                                                      {'alert'      : 'EtcdMemberCommunicationSlow',
+                                                                       'annotations': {'description': 'etcd instance {{ $labels.instance }} member communication with {{ $labels.To }} is slow',
+                                                                                       'summary'    : 'etcd member communication is slow'},
+                                                                       'expr'       : 'histogram_quantile(0.99, rate(etcd_network_peer_round_trip_time_seconds_bucket[5m])) > 0.15',
+                                                                       'for'        : '10m',
+                                                                       'labels'     : {'severity': 'warning'}},
+                                                                      {'alert'      : 'HighNumberOfFailedProposals',
+                                                                       'annotations': {'description': 'etcd instance {{ $labels.instance }} has seen {{ $value }} proposal failures within the last hour',
+                                                                                       'summary'    : 'a high number of proposals within the etcd cluster are failing'},
+                                                                       'expr'       : 'increase(etcd_server_proposals_failed_total{job="etcd"}[1h]) > 5',
+                                                                       'labels'     : {'severity': 'warning'}},
+                                                                      {'alert'      : 'HighFsyncDurations',
+                                                                       'annotations': {'description': 'etcd instance {{ $labels.instance }} fync durations are high',
+                                                                                       'summary': 'high fsync durations'},
+                                                                       'expr'       : 'histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[5m])) > 0.5',
+                                                                       'for'        : '10m',
+                                                                       'labels': {'severity': 'warning'}},
+                                                                      {'alert': 'HighCommitDurations',
+                                                                       'annotations': {'description': 'etcd instance {{ $labels.instance }} commit durations are high',
+                                                                                       'summary': 'high commit '
+                                                                                                  'durations'},
+                                                                       'expr': 'histogram_quantile(0.99, rate(etcd_disk_backend_commit_duration_seconds_bucket[5m])) > 0.25',
+                                                                       'for': '10m',
+                                                                       'labels': {'severity': 'warning'}}]}]}
+        pprint(yaml_parse(data.get('etcd3.rules.yaml')))
+        #pprint(yaml_parse(data.get('alertmanager.rules.yaml')))
+        #pprint(yaml_parse(data.get('Corefile')))
+
     @pytest.mark.skip('refactor into a new Deployment class')
     def test_deployment(self):
         deployment_file = path_combine('../../test_files/deployment','nginx-deployment.yaml')
@@ -138,7 +353,7 @@ class test_Cluster(TestCase):
         resp = self.cluster.api_apps_v1().create_namespaced_deployment(body=deployment, namespace="default")
         print("Deployment created. status='%s'" % resp.metadata.name)
 
-    def test_info(self):
+    def test_info(self):            #
         info = self.cluster.info()
         for item in info:
             assert list_set(item) == ['api_version', 'binary_data', 'data', 'immutable', 'kind', 'metadata']

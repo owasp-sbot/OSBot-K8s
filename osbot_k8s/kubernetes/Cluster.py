@@ -2,6 +2,7 @@ import warnings
 
 from kubernetes import config, client
 from kubernetes.client import ApiClient, CoreV1Api, AppsV1Api
+from osbot_utils.utils.Dev import pprint
 
 from osbot_k8s.kubernetes.Namespace import Namespace
 from osbot_utils.decorators.lists.group_by          import group_by
@@ -39,9 +40,19 @@ class Cluster:
     def api_resources(self):
         return self.convert_k8s_list_to_dict(self.api_apps_v1().get_api_resources().resources)
 
-    def info(self):
-        data = self.api_core_v1().list_config_map_for_all_namespaces()      # todo, see if we need to have a separate set of functions for list_config_map
+    def config_maps(self):
+        data = self.api_core_v1().list_config_map_for_all_namespaces()
         return self.convert_k8s_list_to_dict(data.items)
+
+    def config_maps_data(self):
+        config_maps_data = {}
+        for config_map in self.config_maps():
+            for data_name, data_value in config_map.get('data').items():
+                config_maps_data[data_name] = data_value                     # ok to override since all values are the same
+        return config_maps_data
+
+    def info(self):
+        return self.config_maps()      # todo, refactor into a method that feel more like info
 
     def load_config(self):
         try:
