@@ -107,6 +107,9 @@ class Cluster_Info:
     def limit_range(self):
         return self.api_core_v1().list_limit_range_for_all_namespaces().to_dict()
 
+    def namespaces(self):
+        return self.api_core_v1().list_namespace()
+
     def stateful_sets(self):
         return self.call_and_index__apps_v1__list__by_metadata_name("list_stateful_set_for_all_namespaces")
 
