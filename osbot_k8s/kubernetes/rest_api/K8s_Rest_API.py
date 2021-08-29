@@ -36,12 +36,12 @@ class K8s_Rest_API:
         except ApiException as api_exception:
             return status_error(message=f"API exception: {api_exception.status}:{api_exception.reason}: for {path}", error=api_exception.body)
 
-    def proxy_pod_request_GET(self, pod_name, pod_namespace, pod_port, pod_path, headers=None):
-        proxy_path = f'/api/v1/namespaces/{pod_namespace}/pods/{pod_name}:{pod_port}/proxy/{pod_path}'
+    def proxy_pod_request_GET(self, pod_name, namespace, pod_port, pod_path='', headers=None):
+        proxy_path = f'/api/v1/namespaces/{namespace}/pods/{pod_name}:{pod_port}/proxy/{pod_path}'
         return self.request_GET(proxy_path, headers=headers)
 
-    def proxy_service_request_GET(self, service_name, pod_namespace, service_port, pod_path):
-        proxy_path = f'/api/v1/namespaces/{pod_namespace}/services/{service_name}:{service_port}/proxy/{pod_path}'
+    def proxy_service_request_GET(self, service_name, namespace, service_port, pod_path):
+        proxy_path = f'/api/v1/namespaces/{namespace}/services/{service_name}:{service_port}/proxy/{pod_path}'
         return self.request_GET(proxy_path)
 
     def load_config(self):                                  # todo refactor into base class shared with Cluster_Info

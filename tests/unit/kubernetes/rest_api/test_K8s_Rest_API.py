@@ -32,7 +32,7 @@ class test_K8s_Rest_API(TestCase):
         assert pod_name  is not None
         assert namespace is not None
         kwargs = {'pod_name'      : pod_name   ,
-                  'pod_namespace' : namespace  ,
+                  'namespace'     : namespace  ,
                   'pod_port'      : pod_port   ,
                   'pod_path'      : 'metrics'  }
 
@@ -57,7 +57,7 @@ class test_K8s_Rest_API(TestCase):
         namespace    = 'kube-system'
 
         kwargs = {'service_name'  : service_name ,
-                  'pod_namespace' : namespace    ,
+                  'namespace'     : namespace    ,
                   'service_port'  : service_port ,
                   'pod_path'      : 'metrics'    }
 

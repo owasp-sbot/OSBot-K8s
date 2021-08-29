@@ -52,3 +52,6 @@ class Namespace:
 
     def not_exists(self):
         return self.info() == {}
+
+    def __repr__(self):
+        return f"Namespace: {self.name}"
