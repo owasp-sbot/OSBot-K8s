@@ -1,7 +1,9 @@
 import warnings
 
-from kubernetes import config, client
+
 from kubernetes.client import ApiClient, CoreV1Api, AppsV1Api
+
+from osbot_k8s.kubernetes.Cluster_Info import Cluster_Info
 from osbot_utils.utils.Dev import pprint
 
 from osbot_k8s.kubernetes.Namespace import Namespace
@@ -11,112 +13,16 @@ from osbot_utils.decorators.methods.cache_on_self   import cache_on_self
 from osbot_utils.utils.Misc import ignore_warning__unclosed_ssl, obj_data
 
 
-class Cluster:
+class Cluster(Cluster_Info):
 
     def __init__(self, default_namespace='default', config_file=None, config_context=None):
-        ignore_warning__unclosed_ssl()
+        super().__init__(config_file=config_file, config_context=config_context)
         self.default_namespace   = Namespace(name=default_namespace, cluster=self)
-        self.config_file         = config_file
-        self.config_context      = config_context
 
-    # helper methods
-
-    @cache_on_self
-    def api_apps_v1(self) -> AppsV1Api:
-        self.load_config()
-        return client.AppsV1Api()
-
-    @cache_on_self
-    def api_core_v1(self) -> CoreV1Api:
-        self.load_config()
-        return client.CoreV1Api()
-
-    def call_and_index__api__list__by_metadata_name(self, api_function, function_name):
-        function      = getattr(api_function(), function_name)
-        function_data = function()
-        indexed_by_name = {}
-        for item in self.convert_k8s_list_to_dict(function_data.items):
-            item_name = item.get('metadata').get('name')
-            indexed_by_name[item_name] = item
-        return indexed_by_name
-
-    def call_and_index__apps_v1__list__by_metadata_name(self, function_name):
-        return self.call_and_index__api__list__by_metadata_name(self.api_apps_v1, function_name)
-
-    def call_and_index__core__v1_list__by_metadata_name(self, function_name):
-        return self.call_and_index__api__list__by_metadata_name(self.api_core_v1, function_name)
-
-    def convert_k8s_list_to_dict(self, target):
-        items = []                                                      # do this so that we have easy to manipulate python objects
-        for item in target:   # and there doesn't seem to be any advantage of actually using the kubernetes API Resource class (for example methods to use those resources)
-            items.append(item.to_dict())
-        return items
-
-
-    # cluster methods
-    @index_by
-    @group_by
-    def api_v1_resources(self):
-        return self.convert_k8s_list_to_dict(self.api_apps_v1().get_api_resources().resources)
-
-    @index_by
-    @group_by
-    def components_status(self):
-        return self.call_and_index__core__v1_list__by_metadata_name("list_component_status") #(self.api_core_v1().list_component_status().items)
-
-    def config_maps(self):
-        return self.convert_k8s_list_to_dict(self.api_core_v1().list_config_map_for_all_namespaces().items)
-
-    def config_maps_data(self):
-        config_maps_data = {}
-        for config_map in self.config_maps():
-            for data_name, data_value in config_map.get('data').items():
-                config_maps_data[data_name] = data_value                     # ok to override since all values are the same
-        return config_maps_data
-
-    @index_by
-    @group_by
-    def config_maps_metadata(self):
-        config_maps_metadata = []
-        for config_map in self.config_maps():
-            config_maps_metadata.append(config_map.get('metadata'))
-        return config_maps_metadata
-
-    @index_by
-    @group_by
-    def core_v1_resources(self):
-        return self.convert_k8s_list_to_dict(self.api_core_v1().get_api_resources().resources)
-
-    def daemon_sets(self):
-        return self.call_and_index__apps_v1__list__by_metadata_name("list_daemon_set_for_all_namespaces")
-
-        # daemon_sets = {}
-        # daemon_sets_data = self.api_apps_v1().list_daemon_set_for_all_namespaces()
-        # for daemon_set in self.convert_k8s_list_to_dict(daemon_sets_data.items):
-        #     daemon_set_name              = daemon_set.get('metadata').get('name')
-        #     daemon_sets[daemon_set_name] = daemon_set
-        # return daemon_sets
-
-    def deployments(self):
-        return self.call_and_index__apps_v1__list__by_metadata_name("list_deployment_for_all_namespaces")
-
-    def endpoints(self):
-        return self.call_and_index__core__v1_list__by_metadata_name("list_endpoints_for_all_namespaces")
-
-    def events(self):
-        return self.convert_k8s_list_to_dict(self.api_core_v1().list_event_for_all_namespaces().items)
-        #return self.call_and_index__core__v1_list__by_metadata_name("list_event_for_all_namespaces")
 
     def info(self):
         return self.config_maps()      # todo, refactor into a method that feel more like info
 
-    def load_config(self):
-        try:
-            config.load_kube_config(config_file=self.config_file, context=self.config_context)
-            return True
-        except Exception as error:
-            print(error)
-            return False
 
     def namespace(self, name=None) -> Namespace:
         if name:
@@ -179,9 +85,3 @@ class Cluster:
     def set_default_namespace(self, name):
         self.default_namespace = Namespace(name)
 
-    def stateful_sets(self):
-        return self.call_and_index__apps_v1__list__by_metadata_name("list_stateful_set_for_all_namespaces")
-
-
-    def replica_sets(self):
-        return self.call_and_index__apps_v1__list__by_metadata_name("list_replica_set_for_all_namespaces")
