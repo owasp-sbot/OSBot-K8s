@@ -3,7 +3,7 @@ import os
 from unittest import TestCase
 import pytest
 from osbot_utils.utils.Misc import obj_dict, list_set, obj_list_set, class_functions, class_functions_names, \
-    list_index_by, list_group_by
+    list_index_by, list_group_by, obj_data
 
 from osbot_utils.utils.Dev import pprint
 from pytest import skip
@@ -22,6 +22,11 @@ class test_Cluster(TestCase):
         if self.cluster.load_config() is False:
             skip('no K8 clusters available in current environment')
         print()
+
+    def test__(self):
+        apps_api = self.cluster.api_apps_v1()
+        data = apps_api.list_controller_revision_for_all_namespaces()
+        pprint(data)
 
     def test_api_apps_v1(self):
         apps_api      = self.cluster.api_apps_v1()
@@ -118,6 +123,152 @@ class test_Cluster(TestCase):
                                              'client_side_validation'       : True,
                                              'logger'                       : {'package_logger': configuration.logger.get('package_logger'), 'urllib3_logger': configuration.logger.get('urllib3_logger')}}
 
+    def test_api_core_v1(self):
+        core_api      = self.cluster.api_core_v1()
+        api_client    = core_api.api_client
+        configuration = api_client.configuration
+
+        assert class_functions_names(core_api) == ['__init__',
+                                                   'connect_delete_namespaced_pod_proxy', 'connect_delete_namespaced_pod_proxy_with_http_info', 'connect_delete_namespaced_pod_proxy_with_path',
+                                                   'connect_delete_namespaced_pod_proxy_with_path_with_http_info', 'connect_delete_namespaced_service_proxy', 'connect_delete_namespaced_service_proxy_with_http_info',
+                                                   'connect_delete_namespaced_service_proxy_with_path', 'connect_delete_namespaced_service_proxy_with_path_with_http_info', 'connect_delete_node_proxy',
+                                                   'connect_delete_node_proxy_with_http_info', 'connect_delete_node_proxy_with_path', 'connect_delete_node_proxy_with_path_with_http_info',
+                                                   'connect_get_namespaced_pod_attach', 'connect_get_namespaced_pod_attach_with_http_info', 'connect_get_namespaced_pod_exec',
+                                                   'connect_get_namespaced_pod_exec_with_http_info', 'connect_get_namespaced_pod_portforward', 'connect_get_namespaced_pod_portforward_with_http_info',
+                                                   'connect_get_namespaced_pod_proxy', 'connect_get_namespaced_pod_proxy_with_http_info', 'connect_get_namespaced_pod_proxy_with_path',
+                                                   'connect_get_namespaced_pod_proxy_with_path_with_http_info', 'connect_get_namespaced_service_proxy', 'connect_get_namespaced_service_proxy_with_http_info',
+                                                   'connect_get_namespaced_service_proxy_with_path', 'connect_get_namespaced_service_proxy_with_path_with_http_info', 'connect_get_node_proxy',
+                                                   'connect_get_node_proxy_with_http_info', 'connect_get_node_proxy_with_path', 'connect_get_node_proxy_with_path_with_http_info',
+                                                   'connect_head_namespaced_pod_proxy', 'connect_head_namespaced_pod_proxy_with_http_info', 'connect_head_namespaced_pod_proxy_with_path',
+                                                   'connect_head_namespaced_pod_proxy_with_path_with_http_info', 'connect_head_namespaced_service_proxy',
+                                                   'connect_head_namespaced_service_proxy_with_http_info', 'connect_head_namespaced_service_proxy_with_path', 'connect_head_namespaced_service_proxy_with_path_with_http_info',
+                                                   'connect_head_node_proxy', 'connect_head_node_proxy_with_http_info', 'connect_head_node_proxy_with_path', 'connect_head_node_proxy_with_path_with_http_info',
+                                                   'connect_options_namespaced_pod_proxy', 'connect_options_namespaced_pod_proxy_with_http_info', 'connect_options_namespaced_pod_proxy_with_path',
+                                                   'connect_options_namespaced_pod_proxy_with_path_with_http_info', 'connect_options_namespaced_service_proxy', 'connect_options_namespaced_service_proxy_with_http_info',
+                                                   'connect_options_namespaced_service_proxy_with_path', 'connect_options_namespaced_service_proxy_with_path_with_http_info', 'connect_options_node_proxy',
+                                                   'connect_options_node_proxy_with_http_info', 'connect_options_node_proxy_with_path', 'connect_options_node_proxy_with_path_with_http_info',
+                                                   'connect_patch_namespaced_pod_proxy', 'connect_patch_namespaced_pod_proxy_with_http_info', 'connect_patch_namespaced_pod_proxy_with_path',
+                                                   'connect_patch_namespaced_pod_proxy_with_path_with_http_info', 'connect_patch_namespaced_service_proxy', 'connect_patch_namespaced_service_proxy_with_http_info',
+                                                   'connect_patch_namespaced_service_proxy_with_path', 'connect_patch_namespaced_service_proxy_with_path_with_http_info', 'connect_patch_node_proxy',
+                                                   'connect_patch_node_proxy_with_http_info', 'connect_patch_node_proxy_with_path', 'connect_patch_node_proxy_with_path_with_http_info',
+                                                   'connect_post_namespaced_pod_attach', 'connect_post_namespaced_pod_attach_with_http_info', 'connect_post_namespaced_pod_exec',
+                                                   'connect_post_namespaced_pod_exec_with_http_info', 'connect_post_namespaced_pod_portforward', 'connect_post_namespaced_pod_portforward_with_http_info',
+                                                   'connect_post_namespaced_pod_proxy', 'connect_post_namespaced_pod_proxy_with_http_info', 'connect_post_namespaced_pod_proxy_with_path',
+                                                   'connect_post_namespaced_pod_proxy_with_path_with_http_info', 'connect_post_namespaced_service_proxy', 'connect_post_namespaced_service_proxy_with_http_info',
+                                                   'connect_post_namespaced_service_proxy_with_path', 'connect_post_namespaced_service_proxy_with_path_with_http_info', 'connect_post_node_proxy',
+                                                   'connect_post_node_proxy_with_http_info', 'connect_post_node_proxy_with_path', 'connect_post_node_proxy_with_path_with_http_info',
+                                                   'connect_put_namespaced_pod_proxy', 'connect_put_namespaced_pod_proxy_with_http_info', 'connect_put_namespaced_pod_proxy_with_path',
+                                                   'connect_put_namespaced_pod_proxy_with_path_with_http_info', 'connect_put_namespaced_service_proxy', 'connect_put_namespaced_service_proxy_with_http_info',
+                                                   'connect_put_namespaced_service_proxy_with_path', 'connect_put_namespaced_service_proxy_with_path_with_http_info', 'connect_put_node_proxy',
+                                                   'connect_put_node_proxy_with_http_info', 'connect_put_node_proxy_with_path', 'connect_put_node_proxy_with_path_with_http_info',
+
+                                                   'create_namespace', 'create_namespace_with_http_info', 'create_namespaced_binding', 'create_namespaced_binding_with_http_info',
+                                                   'create_namespaced_config_map', 'create_namespaced_config_map_with_http_info', 'create_namespaced_endpoints', 'create_namespaced_endpoints_with_http_info',
+                                                   'create_namespaced_event', 'create_namespaced_event_with_http_info', 'create_namespaced_limit_range', 'create_namespaced_limit_range_with_http_info',
+                                                   'create_namespaced_persistent_volume_claim', 'create_namespaced_persistent_volume_claim_with_http_info', 'create_namespaced_pod',
+                                                   'create_namespaced_pod_binding', 'create_namespaced_pod_binding_with_http_info', 'create_namespaced_pod_eviction',
+                                                   'create_namespaced_pod_eviction_with_http_info', 'create_namespaced_pod_template', 'create_namespaced_pod_template_with_http_info',
+                                                   'create_namespaced_pod_with_http_info', 'create_namespaced_replication_controller', 'create_namespaced_replication_controller_with_http_info',
+                                                   'create_namespaced_resource_quota', 'create_namespaced_resource_quota_with_http_info', 'create_namespaced_secret',
+                                                   'create_namespaced_secret_with_http_info', 'create_namespaced_service', 'create_namespaced_service_account', 'create_namespaced_service_account_token',
+                                                   'create_namespaced_service_account_token_with_http_info', 'create_namespaced_service_account_with_http_info', 'create_namespaced_service_with_http_info',
+                                                   'create_node', 'create_node_with_http_info', 'create_persistent_volume', 'create_persistent_volume_with_http_info',
+
+                                                   'delete_collection_namespaced_config_map', 'delete_collection_namespaced_config_map_with_http_info', 'delete_collection_namespaced_endpoints',
+                                                   'delete_collection_namespaced_endpoints_with_http_info', 'delete_collection_namespaced_event', 'delete_collection_namespaced_event_with_http_info',
+                                                   'delete_collection_namespaced_limit_range', 'delete_collection_namespaced_limit_range_with_http_info', 'delete_collection_namespaced_persistent_volume_claim',
+                                                   'delete_collection_namespaced_persistent_volume_claim_with_http_info', 'delete_collection_namespaced_pod', 'delete_collection_namespaced_pod_template',
+                                                   'delete_collection_namespaced_pod_template_with_http_info', 'delete_collection_namespaced_pod_with_http_info', 'delete_collection_namespaced_replication_controller',
+                                                   'delete_collection_namespaced_replication_controller_with_http_info', 'delete_collection_namespaced_resource_quota',
+                                                   'delete_collection_namespaced_resource_quota_with_http_info', 'delete_collection_namespaced_secret', 'delete_collection_namespaced_secret_with_http_info',
+                                                   'delete_collection_namespaced_service_account', 'delete_collection_namespaced_service_account_with_http_info', 'delete_collection_node',
+                                                   'delete_collection_node_with_http_info', 'delete_collection_persistent_volume', 'delete_collection_persistent_volume_with_http_info',
+                                                   'delete_namespace', 'delete_namespace_with_http_info', 'delete_namespaced_config_map', 'delete_namespaced_config_map_with_http_info',
+                                                   'delete_namespaced_endpoints', 'delete_namespaced_endpoints_with_http_info', 'delete_namespaced_event', 'delete_namespaced_event_with_http_info',
+                                                   'delete_namespaced_limit_range', 'delete_namespaced_limit_range_with_http_info', 'delete_namespaced_persistent_volume_claim',
+                                                   'delete_namespaced_persistent_volume_claim_with_http_info', 'delete_namespaced_pod', 'delete_namespaced_pod_template',
+                                                   'delete_namespaced_pod_template_with_http_info', 'delete_namespaced_pod_with_http_info', 'delete_namespaced_replication_controller',
+                                                   'delete_namespaced_replication_controller_with_http_info', 'delete_namespaced_resource_quota', 'delete_namespaced_resource_quota_with_http_info',
+                                                   'delete_namespaced_secret', 'delete_namespaced_secret_with_http_info', 'delete_namespaced_service', 'delete_namespaced_service_account',
+                                                   'delete_namespaced_service_account_with_http_info', 'delete_namespaced_service_with_http_info', 'delete_node', 'delete_node_with_http_info',
+                                                   'delete_persistent_volume', 'delete_persistent_volume_with_http_info',
+
+                                                   'get_api_resources', 'get_api_resources_with_http_info',
+
+                                                   'list_component_status', 'list_component_status_with_http_info', 'list_config_map_for_all_namespaces', 'list_config_map_for_all_namespaces_with_http_info',
+                                                   'list_endpoints_for_all_namespaces', 'list_endpoints_for_all_namespaces_with_http_info', 'list_event_for_all_namespaces', 'list_event_for_all_namespaces_with_http_info',
+                                                   'list_limit_range_for_all_namespaces', 'list_limit_range_for_all_namespaces_with_http_info', 'list_namespace', 'list_namespace_with_http_info',
+                                                   'list_namespaced_config_map', 'list_namespaced_config_map_with_http_info', 'list_namespaced_endpoints', 'list_namespaced_endpoints_with_http_info',
+                                                   'list_namespaced_event', 'list_namespaced_event_with_http_info', 'list_namespaced_limit_range', 'list_namespaced_limit_range_with_http_info',
+                                                   'list_namespaced_persistent_volume_claim', 'list_namespaced_persistent_volume_claim_with_http_info', 'list_namespaced_pod',
+                                                   'list_namespaced_pod_template', 'list_namespaced_pod_template_with_http_info', 'list_namespaced_pod_with_http_info',
+                                                   'list_namespaced_replication_controller', 'list_namespaced_replication_controller_with_http_info', 'list_namespaced_resource_quota',
+                                                   'list_namespaced_resource_quota_with_http_info', 'list_namespaced_secret', 'list_namespaced_secret_with_http_info', 'list_namespaced_service',
+                                                   'list_namespaced_service_account', 'list_namespaced_service_account_with_http_info', 'list_namespaced_service_with_http_info', 'list_node',
+                                                   'list_node_with_http_info', 'list_persistent_volume', 'list_persistent_volume_claim_for_all_namespaces', 'list_persistent_volume_claim_for_all_namespaces_with_http_info',
+                                                   'list_persistent_volume_with_http_info', 'list_pod_for_all_namespaces', 'list_pod_for_all_namespaces_with_http_info', 'list_pod_template_for_all_namespaces',
+                                                   'list_pod_template_for_all_namespaces_with_http_info', 'list_replication_controller_for_all_namespaces', 'list_replication_controller_for_all_namespaces_with_http_info',
+                                                   'list_resource_quota_for_all_namespaces', 'list_resource_quota_for_all_namespaces_with_http_info', 'list_secret_for_all_namespaces',
+                                                   'list_secret_for_all_namespaces_with_http_info', 'list_service_account_for_all_namespaces', 'list_service_account_for_all_namespaces_with_http_info',
+                                                   'list_service_for_all_namespaces', 'list_service_for_all_namespaces_with_http_info',
+
+                                                   'patch_namespace', 'patch_namespace_status', 'patch_namespace_status_with_http_info', 'patch_namespace_with_http_info', 'patch_namespaced_config_map',
+                                                   'patch_namespaced_config_map_with_http_info', 'patch_namespaced_endpoints', 'patch_namespaced_endpoints_with_http_info', 'patch_namespaced_event',
+                                                   'patch_namespaced_event_with_http_info', 'patch_namespaced_limit_range', 'patch_namespaced_limit_range_with_http_info', 'patch_namespaced_persistent_volume_claim',
+                                                   'patch_namespaced_persistent_volume_claim_status', 'patch_namespaced_persistent_volume_claim_status_with_http_info', 'patch_namespaced_persistent_volume_claim_with_http_info',
+                                                   'patch_namespaced_pod', 'patch_namespaced_pod_status', 'patch_namespaced_pod_status_with_http_info', 'patch_namespaced_pod_template', 'patch_namespaced_pod_template_with_http_info',
+                                                   'patch_namespaced_pod_with_http_info', 'patch_namespaced_replication_controller', 'patch_namespaced_replication_controller_scale', 'patch_namespaced_replication_controller_scale_with_http_info',
+                                                   'patch_namespaced_replication_controller_status', 'patch_namespaced_replication_controller_status_with_http_info', 'patch_namespaced_replication_controller_with_http_info',
+                                                   'patch_namespaced_resource_quota', 'patch_namespaced_resource_quota_status', 'patch_namespaced_resource_quota_status_with_http_info', 'patch_namespaced_resource_quota_with_http_info',
+                                                   'patch_namespaced_secret', 'patch_namespaced_secret_with_http_info', 'patch_namespaced_service', 'patch_namespaced_service_account', 'patch_namespaced_service_account_with_http_info',
+                                                   'patch_namespaced_service_status', 'patch_namespaced_service_status_with_http_info', 'patch_namespaced_service_with_http_info', 'patch_node',
+                                                   'patch_node_status', 'patch_node_status_with_http_info', 'patch_node_with_http_info', 'patch_persistent_volume', 'patch_persistent_volume_status',
+                                                   'patch_persistent_volume_status_with_http_info', 'patch_persistent_volume_with_http_info',
+
+                                                   'read_component_status', 'read_component_status_with_http_info', 'read_namespace', 'read_namespace_status', 'read_namespace_status_with_http_info',
+                                                   'read_namespace_with_http_info', 'read_namespaced_config_map', 'read_namespaced_config_map_with_http_info', 'read_namespaced_endpoints',
+                                                   'read_namespaced_endpoints_with_http_info', 'read_namespaced_event', 'read_namespaced_event_with_http_info', 'read_namespaced_limit_range',
+                                                   'read_namespaced_limit_range_with_http_info', 'read_namespaced_persistent_volume_claim', 'read_namespaced_persistent_volume_claim_status',
+                                                   'read_namespaced_persistent_volume_claim_status_with_http_info', 'read_namespaced_persistent_volume_claim_with_http_info',
+                                                   'read_namespaced_pod', 'read_namespaced_pod_log', 'read_namespaced_pod_log_with_http_info', 'read_namespaced_pod_status',
+                                                   'read_namespaced_pod_status_with_http_info', 'read_namespaced_pod_template', 'read_namespaced_pod_template_with_http_info',
+                                                   'read_namespaced_pod_with_http_info', 'read_namespaced_replication_controller', 'read_namespaced_replication_controller_scale',
+                                                   'read_namespaced_replication_controller_scale_with_http_info', 'read_namespaced_replication_controller_status',
+                                                   'read_namespaced_replication_controller_status_with_http_info', 'read_namespaced_replication_controller_with_http_info',
+                                                   'read_namespaced_resource_quota', 'read_namespaced_resource_quota_status', 'read_namespaced_resource_quota_status_with_http_info',
+                                                   'read_namespaced_resource_quota_with_http_info', 'read_namespaced_secret', 'read_namespaced_secret_with_http_info', 'read_namespaced_service',
+                                                   'read_namespaced_service_account', 'read_namespaced_service_account_with_http_info', 'read_namespaced_service_status',
+                                                   'read_namespaced_service_status_with_http_info', 'read_namespaced_service_with_http_info', 'read_node', 'read_node_status',
+                                                   'read_node_status_with_http_info', 'read_node_with_http_info', 'read_persistent_volume', 'read_persistent_volume_status',
+                                                   'read_persistent_volume_status_with_http_info', 'read_persistent_volume_with_http_info',
+
+                                                   'replace_namespace', 'replace_namespace_finalize', 'replace_namespace_finalize_with_http_info', 'replace_namespace_status',
+                                                   'replace_namespace_status_with_http_info', 'replace_namespace_with_http_info', 'replace_namespaced_config_map', 'replace_namespaced_config_map_with_http_info',
+                                                   'replace_namespaced_endpoints', 'replace_namespaced_endpoints_with_http_info', 'replace_namespaced_event', 'replace_namespaced_event_with_http_info',
+                                                   'replace_namespaced_limit_range', 'replace_namespaced_limit_range_with_http_info', 'replace_namespaced_persistent_volume_claim',
+                                                   'replace_namespaced_persistent_volume_claim_status', 'replace_namespaced_persistent_volume_claim_status_with_http_info',
+                                                   'replace_namespaced_persistent_volume_claim_with_http_info', 'replace_namespaced_pod', 'replace_namespaced_pod_status',
+                                                   'replace_namespaced_pod_status_with_http_info', 'replace_namespaced_pod_template', 'replace_namespaced_pod_template_with_http_info',
+                                                   'replace_namespaced_pod_with_http_info', 'replace_namespaced_replication_controller', 'replace_namespaced_replication_controller_scale',
+                                                   'replace_namespaced_replication_controller_scale_with_http_info', 'replace_namespaced_replication_controller_status',
+                                                   'replace_namespaced_replication_controller_status_with_http_info', 'replace_namespaced_replication_controller_with_http_info',
+                                                   'replace_namespaced_resource_quota', 'replace_namespaced_resource_quota_status', 'replace_namespaced_resource_quota_status_with_http_info',
+                                                   'replace_namespaced_resource_quota_with_http_info', 'replace_namespaced_secret', 'replace_namespaced_secret_with_http_info',
+                                                   'replace_namespaced_service', 'replace_namespaced_service_account', 'replace_namespaced_service_account_with_http_info',
+                                                   'replace_namespaced_service_status', 'replace_namespaced_service_status_with_http_info', 'replace_namespaced_service_with_http_info',
+                                                   'replace_node', 'replace_node_status', 'replace_node_status_with_http_info', 'replace_node_with_http_info', 'replace_persistent_volume',
+                                                   'replace_persistent_volume_status', 'replace_persistent_volume_status_with_http_info', 'replace_persistent_volume_with_http_info']
+
+        assert obj_list_set(api_client) == [ 'client_side_validation', 'configuration', 'cookie', 'default_headers', 'pool_threads', 'rest_client']
+        assert api_client.client_side_validation is True
+
+        core_api_configuration = obj_dict(api_client.configuration)
+        apps_api_configuration = obj_dict(self.cluster.api_apps_v1().api_client.configuration)
+        del core_api_configuration['logger_formatter']                  # apart from this field
+        del apps_api_configuration['logger_formatter']                  # the configuration values are the same
+        assert core_api_configuration == apps_api_configuration         # and the values of apps_api_configuration are tested by test_api_apps_v1
+
+        #assert api_client.cookie is False
 
     def test_api_resources(self):
         resources = self.cluster.api_resources()
@@ -133,12 +284,12 @@ class test_Cluster(TestCase):
     def test_config_maps(self):
         for item in self.cluster.config_maps():
             assert list_set(item) == ['api_version', 'binary_data', 'data', 'immutable', 'kind', 'metadata']
-            assert item.get('api_version') == None
-            assert item.get('binary_data') == None
-            assert item.get('immutable'  ) == None
-            assert item.get('kind'       ) == None
-            #assert item.get('metadata'   ) == None
+            assert item.get('api_version') is None
+            assert item.get('binary_data') is None
+            assert item.get('immutable'  ) is None
+            assert item.get('kind'       ) is None
 
+            # data
             assert list_set(item.get('data')) in [['ca.crt'                                                                         ],
                                                   ['jws-kubeconfig-abcdef', 'kubeconfig'                                            ],
                                                   ['Corefile'                                                                       ],
@@ -152,7 +303,12 @@ class test_Cluster(TestCase):
                                                   ['alertmanager.rules.yaml', 'etcd3.rules.yaml', 'general.rules.yaml',
                                                    'kube-state-metrics.rules.yaml', 'kubelet.rules.yaml',
                                                    'kubernetes.rules.yaml', 'node.rules.yaml', 'prometheus.rules.yaml'              ]]
-
+            # metadata
+            assert list_set(item.get('metadata')) == [ 'annotations', 'cluster_name', 'creation_timestamp',
+                                                       'deletion_grace_period_seconds', 'deletion_timestamp',
+                                                       'finalizers', 'generate_name', 'generation', 'labels',
+                                                       'managed_fields', 'name', 'namespace', 'owner_references',
+                                                       'resource_version', 'self_link', 'uid']
         # confirm that every entry in config_map.ata is the same
         config_maps_data = {}
         for config_map in self.cluster.config_maps():
@@ -161,6 +317,12 @@ class test_Cluster(TestCase):
                     config_maps_data[data_name] = data_value
                 else:
                     assert config_maps_data[data_name] == data_value           # if it exists, it should be the same
+
+
+        # assert item.get('metadata'   ) == None
+        # pprint(yaml_parse(data.get('requestheader-username-headers')))
+        # pprint(yaml_parse(data.get('alertmanager.rules.yaml')))
+        # pprint(yaml_parse(data.get('Corefile')))
 
     def test_config_maps_data(self):
         data = self.cluster.config_maps_data()
@@ -333,17 +495,280 @@ class test_Cluster(TestCase):
                                                                                        'summary': 'high fsync durations'},
                                                                        'expr'       : 'histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[5m])) > 0.5',
                                                                        'for'        : '10m',
-                                                                       'labels': {'severity': 'warning'}},
-                                                                      {'alert': 'HighCommitDurations',
+                                                                       'labels'     : {'severity': 'warning'}},
+                                                                      {'alert'      : 'HighCommitDurations',
                                                                        'annotations': {'description': 'etcd instance {{ $labels.instance }} commit durations are high',
-                                                                                       'summary': 'high commit '
-                                                                                                  'durations'},
+                                                                                       'summary': 'high commit durations'},
                                                                        'expr': 'histogram_quantile(0.99, rate(etcd_disk_backend_commit_duration_seconds_bucket[5m])) > 0.25',
                                                                        'for': '10m',
                                                                        'labels': {'severity': 'warning'}}]}]}
-        pprint(yaml_parse(data.get('etcd3.rules.yaml')))
-        #pprint(yaml_parse(data.get('alertmanager.rules.yaml')))
-        #pprint(yaml_parse(data.get('Corefile')))
+        # note skipping the other prometheus rules files: 'general.rules.yaml',  'jws-kubeconfig-abcdef', 'kube-state-metrics.rules.yaml' , 'kubelet.rules.yaml'. 'kubernetes.rules.yaml',  'node.rules.yaml', 'prometheus.rules.yaml'
+
+        assert list_set(yaml_parse(data.get('kubeconfig'))) == ['apiVersion', 'clusters', 'contexts', 'current-context', 'kind', 'preferences', 'users']
+        assert yaml_parse(data.get('kubeconfig.conf'))      == { 'apiVersion'       : 'v1',
+                                                                 'clusters'         : [ { 'cluster': { 'certificate-authority': '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+                                                                                                        'server': 'https://vm.docker.internal:6443'},
+                                                                                           'name'  : 'default'}],
+                                                                 'contexts'         : [ { 'context': { 'cluster': 'default',
+                                                                                                       'namespace': 'default',
+                                                                                                       'user': 'default'},
+                                                                                          'name': 'default'}],
+                                                                 'current-context'  : 'default',
+                                                                 'kind'             : 'Config',
+                                                                 'users'            : [ { 'name': 'default',
+                                                                                          'user': { 'tokenFile': '/var/run/secrets/kubernetes.io/serviceaccount/token'}}]}
+        assert yaml_parse(data.get('kubelet')) == {  'apiVersion'                       : 'kubelet.config.k8s.io/v1beta1',
+                                                     'authentication'                   : { 'anonymous' : {'enabled': False},
+                                                                                            'webhook'   : {'cacheTTL': '0s', 'enabled': True},
+                                                                                            'x509'      : {'clientCAFile': '/run/config/pki/ca.crt'}},
+                                                     'authorization'                    : { 'mode': 'Webhook',
+                                                                                            'webhook'   : { 'cacheAuthorizedTTL': '0s',
+                                                                                                            'cacheUnauthorizedTTL': '0s'}},
+                                                     'cgroupDriver'                     : 'cgroupfs',
+                                                     'clusterDNS'                       : ['10.96.0.10'],
+                                                     'clusterDomain'                    : 'cluster.local',
+                                                     'cpuManagerReconcilePeriod'        : '0s',
+                                                     'evictionPressureTransitionPeriod' : '0s',
+                                                     'fileCheckFrequency'               : '0s',
+                                                     'healthzBindAddress'               : '127.0.0.1',
+                                                     'healthzPort'                      : 10248,
+                                                     'httpCheckFrequency'               : '0s',
+                                                     'imageMinimumGCAge'                : '0s',
+                                                     'kind'                             : 'KubeletConfiguration',
+                                                     'logging'                          : {},
+                                                     'nodeStatusReportFrequency'        : '0s',
+                                                     'nodeStatusUpdateFrequency'        : '0s',
+                                                     'rotateCertificates'               : True,
+                                                     'runtimeRequestTimeout'            : '0s',
+                                                     'shutdownGracePeriod'              : '0s',
+                                                     'shutdownGracePeriodCriticalPods'  : '0s',
+                                                     'staticPodPath'                    : '/etc/kubernetes/manifests',
+                                                     'streamingConnectionIdleTimeout'   : '0s',
+                                                     'syncFrequency'                    : '0s',
+                                                     'volumeStatsAggPeriod'             : '0s'}
+        # note skipping 'prometheus.yaml'
+        assert yaml_parse(data.get('requestheader-allowed-names')) == ['front-proxy-client']
+        assert data.get('requestheader-client-ca-file').startswith('-----BEGIN CERTIFICATE-----\n')
+        assert yaml_parse(data.get('requestheader-extra-headers-prefix')) == ['X-Remote-Extra-']
+        assert yaml_parse(data.get('requestheader-group-headers'       )) == ['X-Remote-Group']
+        assert yaml_parse(data.get('requestheader-username-headers'    )) == ['X-Remote-User']
+
+    def test_config_maps_metadata(self):
+        for config_map_metadata in self.cluster.config_maps_metadata():
+            assert list_set(config_map_metadata) == [ 'annotations', 'cluster_name', 'creation_timestamp', 'deletion_grace_period_seconds', 'deletion_timestamp', 'finalizers', 'generate_name', 'generation', 'labels', 'managed_fields', 'name', 'namespace', 'owner_references', 'resource_version', 'self_link', 'uid']
+
+        config_maps_metadata = self.cluster.config_maps_metadata(index_by='name')
+        assert list_set(config_maps_metadata) == [ 'cluster-info', 'coredns', 'extension-apiserver-authentication',
+                                                   'kube-proxy', 'kube-root-ca.crt', 'kubeadm-config',
+                                                   'kubelet-config-1.21', 'prometheus-config', 'prometheus-rules']
+
+    def test_daemon_sets(self):
+        daemon_sets = self.cluster.daemon_sets()
+        for daemon_set_name, daemon_set in daemon_sets.items():
+            metadata = daemon_set.get('metadata')
+            spec     = daemon_set.get('spec')
+            assert daemon_set_name      == metadata.get('name')
+            assert list_set(daemon_set) == ['api_version', 'kind', 'metadata', 'spec', 'status']
+            assert list_set(metadata  ) == ['annotations', 'cluster_name', 'creation_timestamp', 'deletion_grace_period_seconds', 'deletion_timestamp', 'finalizers', 'generate_name', 'generation', 'labels', 'managed_fields', 'name', 'namespace', 'owner_references', 'resource_version', 'self_link', 'uid']
+            assert list_set(spec      ) == ['min_ready_seconds', 'revision_history_limit', 'selector', 'template', 'update_strategy']
+
+        kube_proxy     = daemon_sets.get('kube-proxy'    )
+
+        # metadata
+        metadata       = kube_proxy .get('metadata'      )
+        labels         = metadata   .get('labels'        )
+        managed_fields = metadata   .get('managed_fields')
+
+        assert labels == {'k8s-app': 'kube-proxy'}
+
+        managed_fields__by_manager = list_index_by(managed_fields, "manager")
+        kubeadm__managed_fields    = managed_fields__by_manager.get('kubeadm')
+        kubeadm__template_spec     = kubeadm__managed_fields.get('fields_v1').get('f:spec').get('f:template').get('f:spec')
+        kubeadm__containers        = kubeadm__template_spec.get('f:containers')
+        kubeadm__volumes           = kubeadm__template_spec.get('f:volumes'   )
+        kubeadm__volume_mounts     = kubeadm__containers.get('k:{"name":"kube-proxy"}').get('f:volumeMounts')
+
+        assert kubeadm__volume_mounts == { '.'                                   : {                                                            },
+                                          'k:{"mountPath":"/lib/modules"}'       : { '.': {}, 'f:mountPath': {}, 'f:name': {}, 'f:readOnly': {} },
+                                          'k:{"mountPath":"/run/xtables.lock"}'  : { '.': {}, 'f:mountPath': {}, 'f:name': {}                   },
+                                          'k:{"mountPath":"/var/lib/kube-proxy"}': { '.': {}, 'f:mountPath': {}, 'f:name': {}                   }}
+
+        assert kubeadm__volumes       == { '.'                          : {},
+                                           'k:{"name":"kube-proxy"}'    : { '.'          : {},
+                                                                            'f:configMap': { '.': {}, 'f:defaultMode': {}, 'f:name': {}},
+                                                                            'f:name'     : {}},
+                                           'k:{"name":"lib-modules"}'   : { '.'          : {},
+                                                                            'f:hostPath' : { '.': {}, 'f:path': {}, 'f:type': {}},
+                                                                            'f:name'     : {}},
+                                           'k:{"name":"xtables-lock"}'  : { '.'          : {},
+                                                                            'f:hostPath' : { '.': {}, 'f:path': {}, 'f:type': {}},
+                                                                            'f:name'     : {}}}
+
+        spec                     = kube_proxy.get('spec')
+        spec_containers          = spec.get('template').get('spec').get('containers')
+        spec_containers__by_name = list_index_by(spec_containers, 'name')
+        spec_kube_proxy          = spec_containers__by_name.get('kube-proxy')
+        assert spec_kube_proxy == { 'args'              : None,
+                                    'command'           : [ '/usr/local/bin/kube-proxy',
+                                                            '--config=/var/lib/kube-proxy/config.conf',
+                                                            '--hostname-override=$(NODE_NAME)'],
+                                    'env'               : [ { 'name': 'NODE_NAME',
+                                                              'value': None,
+                                                              'value_from': { 'config_map_key_ref': None,
+                                                                              'field_ref': { 'api_version': 'v1',
+                                                                                             'field_path': 'spec.nodeName'},
+                                                                              'resource_field_ref': None,
+                                                                              'secret_key_ref': None}}],
+                                    'env_from'          : None,
+                                    'image'             : 'k8s.gcr.io/kube-proxy:v1.21.2',
+                                    'image_pull_policy' : 'IfNotPresent',
+                                    'lifecycle'         : None,
+                                    'liveness_probe'    : None,
+                                    'name'              : 'kube-proxy',
+                                    'ports'             : None,
+                                    'readiness_probe'   : None,
+                                    'resources'         : { 'limits': None, 'requests': None},
+                                    'security_context'  : { 'allow_privilege_escalation'  : None,
+                                                            'capabilities'                : None,
+                                                            'privileged'                  : True,
+                                                            'proc_mount'                  : None,
+                                                            'read_only_root_filesystem'   : None,
+                                                            'run_as_group'                : None,
+                                                            'run_as_non_root'             : None,
+                                                            'run_as_user'                 : None,
+                                                            'se_linux_options'            : None,
+                                                            'windows_options'             : None},
+                                    'startup_probe'     : None,
+                                    'stdin'             : None,
+                                    'stdin_once'        : None,
+                                    'termination_message_path'  : '/dev/termination-log',
+                                    'termination_message_policy': 'File',
+                                    'tty'               : None,
+                                    'volume_devices'    : None,
+                                    'volume_mounts'     : [ { 'mount_path'          : '/var/lib/kube-proxy',
+                                                              'mount_propagation'   : None,
+                                                              'name'                : 'kube-proxy',
+                                                              'read_only'           : None,
+                                                              'sub_path'            : None,
+                                                              'sub_path_expr'       : None},
+                                                            { 'mount_path'          : '/run/xtables.lock',
+                                                              'mount_propagation'   : None,
+                                                              'name'                : 'xtables-lock',
+                                                              'read_only'           : None,
+                                                              'sub_path'            : None,
+                                                              'sub_path_expr'       : None},
+                                                            { 'mount_path'          : '/lib/modules',
+                                                              'mount_propagation'   : None,
+                                                              'name'                : 'lib-modules',
+                                                              'read_only'           : True,
+                                                              'sub_path'            : None,
+                                                              'sub_path_expr'       : None}],
+                                    'working_dir': None}
+
+    def test_deployments(self):
+        deployments                 = self.cluster.deployments()
+        coredns_deployment          = deployments.get('coredns')
+        coredns_spec                = coredns_deployment.get('spec').get('template').get('spec')
+        coredns_containers          = coredns_spec.get('containers')
+        coredns_containers_by_name  = list_index_by(coredns_containers, 'name')
+        coredns_container           = coredns_containers_by_name.get('coredns')
+        coredns_tolerations         = coredns_spec.get('tolerations')
+
+        assert list_set(coredns_containers_by_name) == ['coredns']
+        assert list_set(coredns_container         ) == [ 'args', 'command', 'env', 'env_from', 'image', 'image_pull_policy',
+                                                         'lifecycle', 'liveness_probe', 'name', 'ports', 'readiness_probe',
+                                                         'resources', 'security_context', 'startup_probe', 'stdin', 'stdin_once',
+                                                         'termination_message_path', 'termination_message_policy', 'tty',
+                                                         'volume_devices', 'volume_mounts', 'working_dir']
+
+        assert coredns_container == { 'args'                : ['-conf', '/etc/coredns/Corefile'],
+                                      'command'             : None,
+                                      'env'                 : None,
+                                      'env_from'            : None,
+                                      'image'               : 'k8s.gcr.io/coredns/coredns:v1.8.0',
+                                      'image_pull_policy'   : 'IfNotPresent',
+                                      'lifecycle'           : None,
+                                      'liveness_probe'      : { '_exec'                 : None  ,
+                                                                'failure_threshold'     : 5     ,
+                                                                'http_get'              : { 'host'          : None,
+                                                                                            'http_headers'  : None,
+                                                                                            'path'          : '/health',
+                                                                                            'port'          : 8080,
+                                                                                            'scheme'        : 'HTTP'},
+                                                                'initial_delay_seconds' : 60    ,
+                                                                'period_seconds'        : 10    ,
+                                                                'success_threshold'     : 1     ,
+                                                                'tcp_socket'            : None  ,
+                                                                'timeout_seconds'       : 5     },
+                                      'name'                : 'coredns',
+                                      'ports'               : [ { 'container_port' : 53        ,
+                                                                  'host_ip'        : None      ,
+                                                                  'host_port'      : None      ,
+                                                                  'name'           : 'dns'     ,
+                                                                  'protocol'       : 'UDP'     },
+                                                                { 'container_port' : 53        ,
+                                                                  'host_ip'        : None      ,
+                                                                  'host_port'      : None      ,
+                                                                  'name'           : 'dns-tcp' ,
+                                                                  'protocol'       : 'TCP'     },
+                                                                { 'container_port' : 9153      ,
+                                                                  'host_ip'        : None      ,
+                                                                  'host_port'      : None      ,
+                                                                  'name'           : 'metrics' ,
+                                                                  'protocol'       : 'TCP'     }],
+                                      'readiness_probe'     : { '_exec'                 : None  ,
+                                                                'failure_threshold'     : 3     ,
+                                                                'http_get'              : { 'host'          : None      ,
+                                                                                        'http_headers'  : None      ,
+                                                                                        'path'          : '/ready'  ,
+                                                                                        'port'          : 8181      ,
+                                                                                        'scheme'        : 'HTTP'    },
+                                                                'initial_delay_seconds' : None  ,
+                                                                'period_seconds'        : 10    ,
+                                                                'success_threshold'     : 1     ,
+                                                                'tcp_socket'            : None  ,
+                                                                'timeout_seconds'       : 1     },
+                                      'resources'           : { 'limits'   : {'memory': '170Mi'},
+                                                                'requests' : {'cpu': '100m', 'memory': '70Mi'}},
+                                      'security_context'    : { 'allow_privilege_escalation': False,
+                                                                'capabilities': { 'add': ['NET_BIND_SERVICE'], 'drop': ['all']},
+                                                                'privileged'                : None,
+                                                                'proc_mount'                : None,
+                                                                'read_only_root_filesystem' : True,
+                                                                'run_as_group'              : None,
+                                                                'run_as_non_root'           : None,
+                                                                'run_as_user'               : None,
+                                                                'se_linux_options'          : None,
+                                                                'windows_options'           : None},
+                                      'startup_probe'       : None,
+                                      'stdin'               : None,
+                                      'stdin_once'          : None,
+                                      'termination_message_path': '/dev/termination-log',
+                                      'termination_message_policy': 'File',
+                                      'tty'                 : None,
+                                      'volume_devices'      : None,
+                                      'volume_mounts'       : [ { 'mount_path'       : '/etc/coredns',
+                                                                  'mount_propagation': None,
+                                                                  'name'             : 'config-volume',
+                                                                  'read_only'        : True,
+                                                                  'sub_path'         : None,
+                                                                  'sub_path_expr'   : None}],
+                                      'working_dir'         : None}
+        assert coredns_tolerations == [  { 'effect'             : None,
+                                           'key'                : 'CriticalAddonsOnly',
+                                           'operator'           : 'Exists',
+                                           'toleration_seconds' : None,
+                                           'value'              : None},
+                                         { 'effect'             : 'NoSchedule',
+                                           'key'                : 'node-role.kubernetes.io/master',
+                                           'operator'           : None,
+                                           'toleration_seconds' : None,
+                                           'value'              : None},
+                                         { 'effect'             : 'NoSchedule',
+                                           'key'                : 'node-role.kubernetes.io/control-plane',
+                                           'operator'           : None,
+                                           'toleration_seconds' : None,
+                                           'value'              : None}]
 
     @pytest.mark.skip('refactor into a new Deployment class')
     def test_deployment(self):

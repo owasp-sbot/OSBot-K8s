@@ -8,7 +8,7 @@ from osbot_k8s.kubernetes.Namespace import Namespace
 from osbot_utils.decorators.lists.group_by          import group_by
 from osbot_utils.decorators.lists.index_by          import index_by
 from osbot_utils.decorators.methods.cache_on_self   import cache_on_self
-from osbot_utils.utils.Misc                         import ignore_warning__unclosed_ssl
+from osbot_utils.utils.Misc import ignore_warning__unclosed_ssl, obj_data
 
 
 class Cluster:
@@ -41,8 +41,7 @@ class Cluster:
         return self.convert_k8s_list_to_dict(self.api_apps_v1().get_api_resources().resources)
 
     def config_maps(self):
-        data = self.api_core_v1().list_config_map_for_all_namespaces()
-        return self.convert_k8s_list_to_dict(data.items)
+        return self.convert_k8s_list_to_dict(self.api_core_v1().list_config_map_for_all_namespaces().items)
 
     def config_maps_data(self):
         config_maps_data = {}
@@ -50,6 +49,36 @@ class Cluster:
             for data_name, data_value in config_map.get('data').items():
                 config_maps_data[data_name] = data_value                     # ok to override since all values are the same
         return config_maps_data
+
+    @index_by
+    @group_by
+    def config_maps_metadata(self):
+        config_maps_metadata = []
+        for config_map in self.config_maps():
+            config_maps_metadata.append(config_map.get('metadata'))
+        return config_maps_metadata
+
+    def call_and_index__apps_v1_list__by_metadata_name(self, function_name):
+        function      = getattr(self.api_apps_v1(), function_name)
+        function_data = function()
+        indexed_by_name = {}
+        for item in self.convert_k8s_list_to_dict(function_data.items):
+            item_name = item.get('metadata').get('name')
+            indexed_by_name[item_name] = item
+        return indexed_by_name
+
+    def daemon_sets(self):
+        return self.call_and_index__apps_v1_list__by_metadata_name("list_daemon_set_for_all_namespaces")
+
+        # daemon_sets = {}
+        # daemon_sets_data = self.api_apps_v1().list_daemon_set_for_all_namespaces()
+        # for daemon_set in self.convert_k8s_list_to_dict(daemon_sets_data.items):
+        #     daemon_set_name              = daemon_set.get('metadata').get('name')
+        #     daemon_sets[daemon_set_name] = daemon_set
+        # return daemon_sets
+
+    def deployments(self):
+        return self.call_and_index__apps_v1_list__by_metadata_name("list_deployment_for_all_namespaces")
 
     def info(self):
         return self.config_maps()      # todo, refactor into a method that feel more like info
