@@ -19,6 +19,8 @@ class Cluster:
         self.config_file         = config_file
         self.config_context      = config_context
 
+    # helper methods
+
     @cache_on_self
     def api_apps_v1(self) -> AppsV1Api:
         self.load_config()
@@ -29,16 +31,38 @@ class Cluster:
         self.load_config()
         return client.CoreV1Api()
 
+    def call_and_index__api__list__by_metadata_name(self, api_function, function_name):
+        function      = getattr(api_function(), function_name)
+        function_data = function()
+        indexed_by_name = {}
+        for item in self.convert_k8s_list_to_dict(function_data.items):
+            item_name = item.get('metadata').get('name')
+            indexed_by_name[item_name] = item
+        return indexed_by_name
+
+    def call_and_index__apps_v1__list__by_metadata_name(self, function_name):
+        return self.call_and_index__api__list__by_metadata_name(self.api_apps_v1, function_name)
+
+    def call_and_index__core__v1_list__by_metadata_name(self, function_name):
+        return self.call_and_index__api__list__by_metadata_name(self.api_core_v1, function_name)
+
     def convert_k8s_list_to_dict(self, target):
         items = []                                                      # do this so that we have easy to manipulate python objects
         for item in target:   # and there doesn't seem to be any advantage of actually using the kubernetes API Resource class (for example methods to use those resources)
             items.append(item.to_dict())
         return items
 
+
+    # cluster methods
     @index_by
     @group_by
-    def api_resources(self):
+    def api_v1_resources(self):
         return self.convert_k8s_list_to_dict(self.api_apps_v1().get_api_resources().resources)
+
+    @index_by
+    @group_by
+    def components_status(self):
+        return self.call_and_index__core__v1_list__by_metadata_name("list_component_status") #(self.api_core_v1().list_component_status().items)
 
     def config_maps(self):
         return self.convert_k8s_list_to_dict(self.api_core_v1().list_config_map_for_all_namespaces().items)
@@ -58,17 +82,13 @@ class Cluster:
             config_maps_metadata.append(config_map.get('metadata'))
         return config_maps_metadata
 
-    def call_and_index__apps_v1_list__by_metadata_name(self, function_name):
-        function      = getattr(self.api_apps_v1(), function_name)
-        function_data = function()
-        indexed_by_name = {}
-        for item in self.convert_k8s_list_to_dict(function_data.items):
-            item_name = item.get('metadata').get('name')
-            indexed_by_name[item_name] = item
-        return indexed_by_name
+    @index_by
+    @group_by
+    def core_v1_resources(self):
+        return self.convert_k8s_list_to_dict(self.api_core_v1().get_api_resources().resources)
 
     def daemon_sets(self):
-        return self.call_and_index__apps_v1_list__by_metadata_name("list_daemon_set_for_all_namespaces")
+        return self.call_and_index__apps_v1__list__by_metadata_name("list_daemon_set_for_all_namespaces")
 
         # daemon_sets = {}
         # daemon_sets_data = self.api_apps_v1().list_daemon_set_for_all_namespaces()
@@ -78,7 +98,14 @@ class Cluster:
         # return daemon_sets
 
     def deployments(self):
-        return self.call_and_index__apps_v1_list__by_metadata_name("list_deployment_for_all_namespaces")
+        return self.call_and_index__apps_v1__list__by_metadata_name("list_deployment_for_all_namespaces")
+
+    def endpoints(self):
+        return self.call_and_index__core__v1_list__by_metadata_name("list_endpoints_for_all_namespaces")
+
+    def events(self):
+        return self.convert_k8s_list_to_dict(self.api_core_v1().list_event_for_all_namespaces().items)
+        #return self.call_and_index__core__v1_list__by_metadata_name("list_event_for_all_namespaces")
 
     def info(self):
         return self.config_maps()      # todo, refactor into a method that feel more like info
@@ -152,3 +179,9 @@ class Cluster:
     def set_default_namespace(self, name):
         self.default_namespace = Namespace(name)
 
+    def stateful_sets(self):
+        return self.call_and_index__apps_v1__list__by_metadata_name("list_stateful_set_for_all_namespaces")
+
+
+    def replica_sets(self):
+        return self.call_and_index__apps_v1__list__by_metadata_name("list_replica_set_for_all_namespaces")

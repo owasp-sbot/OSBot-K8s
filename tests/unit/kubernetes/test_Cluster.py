@@ -3,7 +3,7 @@ import os
 from unittest import TestCase
 import pytest
 from osbot_utils.utils.Misc import obj_dict, list_set, obj_list_set, class_functions, class_functions_names, \
-    list_index_by, list_group_by, obj_data
+    list_index_by, list_group_by, obj_data, list_get_field
 
 from osbot_utils.utils.Dev import pprint
 from pytest import skip
@@ -23,10 +23,10 @@ class test_Cluster(TestCase):
             skip('no K8 clusters available in current environment')
         print()
 
-    def test__(self):
-        apps_api = self.cluster.api_apps_v1()
-        data = apps_api.list_controller_revision_for_all_namespaces()
-        pprint(data)
+    # def test__(self):
+    #     core_api = self.cluster.api_core_v1()
+    #     data = core_api.list_namespace()
+    #     pprint(data)
 
     def test_api_apps_v1(self):
         apps_api      = self.cluster.api_apps_v1()
@@ -270,8 +270,8 @@ class test_Cluster(TestCase):
 
         #assert api_client.cookie is False
 
-    def test_api_resources(self):
-        resources = self.cluster.api_resources()
+    def test_api_v1_resources(self):
+        resources = self.cluster.api_v1_resources()
         for resource in resources:
             assert list_set(resource) == ['categories','group','kind','name','namespaced','short_names',
                                           'singular_name','storage_version_hash','verbs','version']
@@ -280,6 +280,46 @@ class test_Cluster(TestCase):
                                                               'deployments', 'deployments/scale', 'deployments/status',
                                                               'replicasets', 'replicasets/scale', 'replicasets/status',
                                                               'statefulsets', 'statefulsets/scale', 'statefulsets/status']
+
+    def test_component_status(self):
+        components_status = self.cluster.components_status()
+        for component_status in components_status.values():
+             assert list_set(component_status) == ['api_version', 'conditions', 'kind', 'metadata']
+        assert list_set(components_status) == ['controller-manager', 'etcd-0', 'scheduler']
+
+    def test_endpoints(self):
+        endpoints = self.cluster.endpoints()
+        for endpoint in endpoints.values():
+             assert list_set(endpoint) == ['api_version', 'kind', 'metadata', 'subsets']
+        assert list_set(endpoints)     == ['docker.io-hostpath', 'kube-dns', 'kube-state-metrics', 'kubernetes', 'node-exporter', 'prometheus']
+
+        kube_dns            = endpoints.get('kube-dns')
+        kube_dns_metadata   = kube_dns.get('metadata')
+        kube_dns_subsets    = kube_dns.get('subsets')
+        kube_dns_subset     = kube_dns.get('subsets')[0]
+        kube_addresses      = kube_dns_subset.get('addresses')
+        kube_ports          = kube_dns_subset.get('ports')
+
+        for kube_address in kube_addresses:
+            assert list_set(kube_address) == ['hostname', 'ip', 'node_name', 'target_ref']
+
+        assert len(kube_dns_subsets) == 1
+        assert kube_dns_metadata.get('labels') == { 'k8s-app'                      : 'kube-dns' ,
+                                                    'kubernetes.io/cluster-service': 'true'     ,
+                                                    'kubernetes.io/name'           : 'CoreDNS'  }
+
+        assert kube_ports == [ { 'app_protocol' : None,
+                                 'name'         : 'dns-tcp',
+                                 'port'         : 53,
+                                 'protocol'     : 'TCP'},
+                               { 'app_protocol' : None,
+                                 'name'         : 'dns',
+                                 'port'         : 53,
+                                 'protocol'     : 'UDP'},
+                               { 'app_protocol': None,
+                                 'name'         : 'metrics',
+                                 'port'         : 9153,
+                                 'protocol'     : 'TCP'}]
 
     def test_config_maps(self):
         for item in self.cluster.config_maps():
@@ -562,6 +602,24 @@ class test_Cluster(TestCase):
                                                    'kube-proxy', 'kube-root-ca.crt', 'kubeadm-config',
                                                    'kubelet-config-1.21', 'prometheus-config', 'prometheus-rules']
 
+    def test_core_v1_resources(self):
+        resources = self.cluster.core_v1_resources()
+        for resource in resources:
+            assert list_set(resource) == ['categories','group','kind','name','namespaced','short_names',
+                                          'singular_name','storage_version_hash','verbs','version']
+
+        assert list_set(list_index_by(resources, 'name')) == ['bindings', 'componentstatuses', 'configmaps', 'endpoints',
+                                                              'events', 'limitranges', 'namespaces', 'namespaces/finalize',
+                                                              'namespaces/status', 'nodes', 'nodes/proxy', 'nodes/status',
+                                                              'persistentvolumeclaims', 'persistentvolumeclaims/status',
+                                                              'persistentvolumes', 'persistentvolumes/status', 'pods',
+                                                              'pods/attach', 'pods/binding', 'pods/eviction', 'pods/exec',
+                                                              'pods/log', 'pods/portforward', 'pods/proxy', 'pods/status',
+                                                              'podtemplates', 'replicationcontrollers', 'replicationcontrollers/scale',
+                                                              'replicationcontrollers/status', 'resourcequotas', 'resourcequotas/status',
+                                                              'secrets', 'serviceaccounts', 'serviceaccounts/token',
+                                                              'services', 'services/proxy', 'services/status']
+
     def test_daemon_sets(self):
         daemon_sets = self.cluster.daemon_sets()
         for daemon_set_name, daemon_set in daemon_sets.items():
@@ -770,13 +828,13 @@ class test_Cluster(TestCase):
                                            'toleration_seconds' : None,
                                            'value'              : None}]
 
-    @pytest.mark.skip('refactor into a new Deployment class')
-    def test_deployment(self):
-        deployment_file = path_combine('../../test_files/deployment','nginx-deployment.yaml')
-        assert file_exists(deployment_file)
-        deployment = yaml_load(deployment_file)
-        resp = self.cluster.api_apps_v1().create_namespaced_deployment(body=deployment, namespace="default")
-        print("Deployment created. status='%s'" % resp.metadata.name)
+    def test_events(self):
+        events   = self.cluster.events()
+        messages = list_get_field(events, "message")
+        for event in events:
+            assert list_set(event) == ['action', 'api_version', 'count', 'event_time', 'first_timestamp', 'involved_object', 'kind', 'last_timestamp', 'message', 'metadata', 'reason', 'related', 'reporting_component', 'reporting_instance', 'series', 'source', 'type']
+        assert 'Created container vpnkit-controller' in messages
+
 
     def test_info(self):            #
         info = self.cluster.info()
@@ -797,3 +855,139 @@ class test_Cluster(TestCase):
 
     def test_pods_all(self):
         assert len(self.cluster.pods_all()) > 0
+
+    def test_stateful_sets(self):
+        stateful_sets = self.cluster.stateful_sets()
+        for stateful_set_name, stateful_set in stateful_sets.items():
+            assert list_set(stateful_set) == ['api_version', 'kind', 'metadata', 'spec', 'status']
+
+        prometheus          = stateful_sets.get('prometheus')
+        prometheus_spec     = prometheus.get('spec').get('template').get('spec')
+        containers          = prometheus_spec.get('containers')
+        containers_by_name  = list_index_by(containers, 'name')
+        container           = containers_by_name.get('prometheus')
+        init_containers     = prometheus_spec.get('init_containers')
+        volumes             = prometheus_spec.get('volumes')
+        volumes_by_name     = list_index_by(volumes, 'name')
+
+        assert container == { 'args'                : [ '--web.listen-address=0.0.0.0:9090',
+                                                        '--config.file=/etc/prometheus/prometheus.yaml',
+                                                        '--storage.tsdb.path=/var/lib/prometheus',
+                                                        '--storage.tsdb.retention.time=2d',
+                                                        '--storage.tsdb.retention.size=5GB',
+                                                        '--storage.tsdb.min-block-duration=2h',
+                                                        '--storage.tsdb.max-block-duration=2h'],
+                              'command'             : None,
+                              'env'                 : None,
+                              'env_from'            : None,
+                              'image'               : 'quay.io/prometheus/prometheus:v2.27.1',
+                              'image_pull_policy'   : 'IfNotPresent',
+                              'lifecycle'           : None,
+                              'liveness_probe'      : { '_exec'             : None,
+                                                        'failure_threshold' : 3,
+                                                        'http_get'          : { 'host'          : None,
+                                                                                'http_headers'  : None,
+                                                                                'path'          : '/-/healthy',
+                                                                                'port'          : 9090,
+                                                                                'scheme'        : 'HTTP'},
+                                                        'initial_delay_seconds': 10,
+                                                        'period_seconds'    : 10,
+                                                        'success_threshold' : 1,
+                                                        'tcp_socket'        : None,
+                                                        'timeout_seconds'   : 10},
+                              'name'                : 'prometheus',
+                              'ports'               : [ { 'container_port'  : 9090,
+                                                          'host_ip'         : None,
+                                                          'host_port'       : None,
+                                                          'name'            : 'web',
+                                                          'protocol'        : 'TCP'}],
+                              'readiness_probe'     : { '_exec'             : None,
+                                                        'failure_threshold': 3,
+                                                        'http_get'          : { 'host'          : None,
+                                                                                'http_headers'  : None,
+                                                                                'path'          : '/-/ready',
+                                                                                'port'          : 9090,
+                                                                                'scheme'        : 'HTTP'},
+                                                        'initial_delay_seconds' : 10,
+                                                        'period_seconds'    : 10,
+                                                        'success_threshold' : 1,
+                                                        'tcp_socket'        : None,
+                                                        'timeout_seconds'   : 10},
+                              'resources'           : {'limits': None, 'requests': {'cpu': '100m', 'memory': '512Mi'}},
+                              'security_context'    : None,
+                              'startup_probe'       : None,
+                              'stdin'               : None,
+                              'stdin_once'          : None,
+                              'termination_message_path'    : '/dev/termination-log',
+                              'termination_message_policy'  : 'File',
+                              'tty'                 : None,
+                              'volume_devices'      : None,
+                              'volume_mounts'       : [ { 'mount_path'          : '/etc/prometheus',
+                                                          'mount_propagation'   : None,
+                                                          'name'                : 'config',
+                                                          'read_only'           : None,
+                                                          'sub_path'            : None,
+                                                          'sub_path_expr'       : None},
+                                                        { 'mount_path'          : '/etc/prometheus/rules',
+                                                          'mount_propagation'   : None,
+                                                          'name'                : 'rules',
+                                                          'read_only'           : None,
+                                                          'sub_path'            : None,
+                                                          'sub_path_expr'       : None},
+                                                        { 'mount_path'          : '/var/lib/prometheus',
+                                                          'mount_propagation'   : None,
+                                                          'name'                : 'data',
+                                                          'read_only'           : None,
+                                                          'sub_path'            : None,
+                                                          'sub_path_expr'       : None}],
+                              'working_dir'          : None}
+
+        assert volumes_by_name.get('config').get('config_map') ==  { 'default_mode' : 420                ,
+                                                                     'items'        : None               ,
+                                                                     'name'         : 'prometheus-config',
+                                                                     'optional'     : None               }
+        assert volumes_by_name.get('rules').get('config_map') ==  { 'default_mode'  : 420                ,
+                                                                     'items'        : None               ,
+                                                                     'name'         : 'prometheus-rules' ,
+                                                                     'optional'     : None               }
+
+        assert init_containers == [ { 'args'             : None,
+                                      'command'          : ['chown', '-R', '65534:65534', '/var/lib/prometheus'],
+                                      'env'              : None,
+                                      'env_from'         : None,
+                                      'image'            : 'docker.io/alpine:3.12',
+                                      'image_pull_policy': 'IfNotPresent',
+                                      'lifecycle'        : None,
+                                      'liveness_probe'   : None,
+                                      'name'             : 'chown',
+                                      'ports'            : None,
+                                      'readiness_probe'  : None,
+                                      'resources'        : {'limits': None, 'requests': None},
+                                      'security_context' : None,
+                                      'startup_probe'    : None,
+                                      'stdin'            : None,
+                                      'stdin_once'       : None,
+                                      'termination_message_path': '/dev/termination-log',
+                                      'termination_message_policy': 'File',
+                                      'tty'              : None,
+                                      'volume_devices'   : None,
+                                      'volume_mounts'    : [ { 'mount_path'       : '/var/lib/prometheus',
+                                                               'mount_propagation': None    ,
+                                                               'name'             : 'data'  ,
+                                                               'read_only'        : None    ,
+                                                               'sub_path'         : None    ,
+                                                               'sub_path_expr'    : None    }],
+                                      'working_dir'      : None }]
+
+    def test_replica_sets(self):
+        replica_sets = self.cluster.replica_sets()
+        for replica_set_name, replica_set in replica_sets.items():
+            assert list_set(replica_set) == ['api_version', 'kind', 'metadata', 'spec', 'status']
+
+    @pytest.mark.skip('refactor into a new Deployment class')
+    def test_deployment(self):
+        deployment_file = path_combine('../../test_files/deployment','nginx-deployment.yaml')
+        assert file_exists(deployment_file)
+        deployment = yaml_load(deployment_file)
+        resp = self.cluster.api_apps_v1().create_namespaced_deployment(body=deployment, namespace="default")
+        print("Deployment created. status='%s'" % resp.metadata.name)
