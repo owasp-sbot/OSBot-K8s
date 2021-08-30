@@ -1,5 +1,6 @@
 from osbot_k8s.kubernetes.Cluster_Info      import Cluster_Info
 from osbot_k8s.kubernetes.Namespace         import Namespace
+from osbot_k8s.kubernetes.Pod import Pod
 from osbot_utils.decorators.lists.group_by  import group_by
 from osbot_utils.decorators.lists.index_by  import index_by
 
@@ -32,22 +33,22 @@ class Cluster(Cluster_Info):            # todo: refactor this class to not use C
     def namespaces_raw(self):
         return self.api_core_v1().list_namespace().items
 
-    def pod(self, name):
+    def pod(self, name=None):
         from osbot_k8s.kubernetes.Pod import Pod            # todo - refactor to remove circular reference issue
         return Pod(name=name, cluster=self)
 
-    def pod_create(self, name, manifest):
-        pod    = self.pod(name)
+    def pod_create(self, manifest):
+        name   = manifest.get('metadata',{}).get('name')
+        pod    = self.pod(name=name)
         result = pod.create(manifest)
         return { 'pod': pod, 'result':result }
 
-    @index_by
-    @group_by
+    #@index_by
+    #@group_by
     def pods(self):
-        from osbot_k8s.kubernetes.Pod import Pod  # todo - refactor to remove circular reference issue
         pods = []
-        for item in self.pods_raw():
-            pod = Pod(item.metadata.name, cluster=self)
+        for pod_name in self.pods_in_namespace(namespace=self.default_namespace.name).keys():
+            pod = Pod(pod_name, cluster=self)
             pods.append(pod)
         return pods
 

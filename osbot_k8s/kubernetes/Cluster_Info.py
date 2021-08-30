@@ -36,20 +36,20 @@ class Cluster_Info:
 
     # data load helper methods
 
-    def call_and_index__api__list__by_metadata_name(self, api_function, function_name):
+    def call_and_index__api__list__by_metadata_name(self, api_function, function_name, **kwargs):
         function      = getattr(api_function(), function_name)
-        function_data = function()
+        function_data = function(**kwargs)
         indexed_by_name = {}
         for item in self.convert_k8s_list_to_dict(function_data.items):
             item_name = item.get('metadata').get('name')
             indexed_by_name[item_name] = item
         return indexed_by_name
 
-    def call_and_index__apps_v1__list__by_metadata_name(self, function_name):
-        return self.call_and_index__api__list__by_metadata_name(self.api_apps_v1, function_name)
+    def call_and_index__apps_v1__list__by_metadata_name(self, function_name, **kwargs):
+        return self.call_and_index__api__list__by_metadata_name(self.api_apps_v1, function_name, **kwargs)
 
-    def call_and_index__core__v1_list__by_metadata_name(self, function_name):
-        return self.call_and_index__api__list__by_metadata_name(self.api_core_v1, function_name)
+    def call_and_index__core_v1__list__by_metadata_name(self, function_name, **kwargs):
+        return self.call_and_index__api__list__by_metadata_name(self.api_core_v1, function_name, **kwargs)
 
     def convert_k8s_list_to_dict(self, target):
         items = []                                                      # do this so that we have easy to manipulate python objects
@@ -67,7 +67,7 @@ class Cluster_Info:
     @index_by
     @group_by
     def components_status(self):
-        return self.call_and_index__core__v1_list__by_metadata_name("list_component_status") #(self.api_core_v1().list_component_status().items)
+        return self.call_and_index__core_v1__list__by_metadata_name("list_component_status") #(self.api_core_v1().list_component_status().items)
 
     def config_maps(self):
         return self.convert_k8s_list_to_dict(self.api_core_v1().list_config_map_for_all_namespaces().items)
@@ -99,7 +99,7 @@ class Cluster_Info:
         return self.call_and_index__apps_v1__list__by_metadata_name("list_deployment_for_all_namespaces")
 
     def endpoints(self):
-        return self.call_and_index__core__v1_list__by_metadata_name("list_endpoints_for_all_namespaces")
+        return self.call_and_index__core_v1__list__by_metadata_name("list_endpoints_for_all_namespaces")
 
     def events(self):
         return self.convert_k8s_list_to_dict(self.api_core_v1().list_event_for_all_namespaces().items)
@@ -109,6 +109,12 @@ class Cluster_Info:
 
     def namespaces(self):
         return self.api_core_v1().list_namespace()
+
+    def pods(self):
+        return self.call_and_index__core_v1__list__by_metadata_name("list_pod_for_all_namespaces")
+
+    def pods_in_namespace(self, namespace):
+        return self.call_and_index__core_v1__list__by_metadata_name("list_namespaced_pod", namespace=namespace)
 
     def stateful_sets(self):
         return self.call_and_index__apps_v1__list__by_metadata_name("list_stateful_set_for_all_namespaces")

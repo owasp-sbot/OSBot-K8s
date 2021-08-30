@@ -1,21 +1,14 @@
 from unittest import TestCase
 
 import pytest
-from osbot_utils.utils.Json import json_parse
 
+from osbot_k8s.utils.Docker_Desktop_Cluster import DEFAULT_DOCKER_DESKTOP_NAME
 from osbot_utils.utils.Dev import pprint
-
 from osbot_utils.utils.Yaml import yaml_parse
-
 from osbot_utils.utils.Files import file_exists
-
-from osbot_utils.utils.Misc import obj_dict, obj_list_set, class_functions_names, list_get_field, list_set, \
-    list_index_by
-
+from osbot_utils.utils.Misc import obj_dict, obj_list_set, class_functions_names, list_get_field, list_set, list_index_by
 from osbot_k8s.kubernetes.Cluster_Info import Cluster_Info
 
-DEFAULT_DOCKER_DESKTOP_NAME = 'docker-desktop'
-DEFAULT_DOCKER_DESKTOP_HOST = 'https://kubernetes.docker.internal:6443'
 
 
 class test_Cluster_Info(TestCase):
@@ -842,20 +835,16 @@ class test_Cluster_Info(TestCase):
         namespaces = self.cluster_info.namespaces()
         pprint(namespaces)
 
+    def test_pods(self):
+        pods = self.cluster_info.pods()
+        pprint(pods)
     #@pytest.mark.skip
-    def test__(self):
-        core_api = self.cluster_info.api_core_v1()
-        #data = core_api.list_limit_range_for_all_namespaces()
-        #pprint(data)
-        try:
-        #response = core_api.api_client.call_api(resource_path='/api/v1/limitranges', method='GET', _return_http_data_only=True)
-            data = core_api.connect_get_namespaced_pod_proxy_with_http_info(name='coredns-558bd4d5db-75vk8:9153',
-                                                                            namespace='kube-system' ,
-                                                                            path='/metrics')
-            pprint(data)
-        except Exception as exception:
-            pprint(exception.body)
-        #response = json_parse(core_api.api_client.request(url=url, method='GET').data)
+
+    # def test__(self):
+    #     core_api = self.cluster_info.api_core_v1()
+    #     #data = core_api.list_limit_range_for_all_namespaces()
+    #     #pprint(data)
+    #     #response = json_parse(core_api.api_client.request(url=url, method='GET').data)
 
 
 

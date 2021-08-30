@@ -1,11 +1,11 @@
 from unittest import TestCase
 
+from osbot_k8s.utils.Docker_Desktop_Cluster import DEFAULT_DOCKER_DESKTOP_NAME
 from osbot_utils.utils.Misc import list_set, list_index_by, str_to_base64
 
 from osbot_utils.utils.Dev import pprint
 
 from osbot_k8s.kubernetes.rest_api.K8s_Rest_API import K8s_Rest_API
-from tests.unit.kubernetes.test_Cluster_Info import DEFAULT_DOCKER_DESKTOP_NAME
 
 
 class test_K8s_Rest_API(TestCase):

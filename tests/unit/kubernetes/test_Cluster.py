@@ -2,6 +2,8 @@ import inspect
 import os
 from unittest import TestCase
 import pytest
+
+from osbot_k8s.utils.Docker_Desktop_Cluster import DEFAULT_DOCKER_DESKTOP_NAME
 from osbot_utils.utils.Misc import obj_dict, list_set, obj_list_set, class_functions, class_functions_names, \
     list_index_by, list_group_by, obj_data, list_get_field
 
@@ -11,7 +13,6 @@ from pytest import skip
 from osbot_k8s.kubernetes.Cluster import Cluster
 from osbot_utils.utils.Files import path_combine, file_exists
 from osbot_utils.utils.Yaml import yaml_load, yaml_parse
-from tests.unit.kubernetes.test_Cluster_Info import DEFAULT_DOCKER_DESKTOP_NAME
 
 
 class test_Cluster(TestCase):

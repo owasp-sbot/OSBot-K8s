@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from osbot_k8s.kubernetes.Cluster import Cluster
-from osbot_k8s.kubernetes.Manifest import Manifest
+from osbot_k8s.manifests.Pod_Manifest import Manifest
 from osbot_k8s.kubernetes.Pod import Pod
 from osbot_utils.utils.Misc import random_string, lower, list_set
 

@@ -7,7 +7,7 @@ from osbot_utils.utils.Status                     import status_ok, status_error
 
 class Pod:
 
-    def __init__(self, name, cluster):
+    def __init__(self, name=None, cluster=None):
         self.name    = name
         self.cluster = cluster
 

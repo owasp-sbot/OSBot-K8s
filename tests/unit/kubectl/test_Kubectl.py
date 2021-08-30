@@ -1,12 +1,10 @@
 from unittest import TestCase
 
+from osbot_k8s.utils.Docker_Desktop_Cluster import DEFAULT_DOCKER_DESKTOP_NAME
 from osbot_utils.utils.Misc import list_set
-
 from osbot_utils.utils.Dev import pprint
-
 from osbot_k8s.kubectl.Kubectl import Kubectl
 
-DEFAULT_DOCKER_DESKTOP_NAME = 'docker-desktop'
 
 class test_Kubectl(TestCase):
 
