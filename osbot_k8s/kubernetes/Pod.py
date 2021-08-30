@@ -52,7 +52,6 @@ class Pod:
                      "start_time": item.status.start_time        }
         return data
 
-
     def event_wait_for(self,  wait_for_name=None, wait_for_type=None, wait_for_phase=None, **kwargs): # todo improve logic to take into account the use of labels to select the target
         for event in Watch().stream(**kwargs):
             event_type  = event.get('type')
@@ -82,6 +81,9 @@ class Pod:
     def event_wait_for_pod_running(self, timeout=10):
         return self.event_wait_for__pod_in_namespace(pod_name=self.name, namespace=self.namespace_name(), wait_for_type='MODIFIED', wait_for_phase='Running', timeout=timeout)
 
+    def events(self):
+        return self.cluster.pod_events(pod_name=self.name)
+
     def info(self):
         return self.format_pod(self.info_raw().get('data'))
 
@@ -91,6 +93,9 @@ class Pod:
             return status_ok(data=data)
         except Exception as exception:
             return status_error(error=exception)
+
+    def logs(self):
+        return self.cluster.pod_logs(pod_name=self.name, namespace=self.namespace_name())
 
     def namespace_name(self):
         return self.cluster.namespace().name

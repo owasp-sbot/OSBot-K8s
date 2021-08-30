@@ -101,14 +101,29 @@ class Cluster_Info:
     def endpoints(self):
         return self.call_and_index__core_v1__list__by_metadata_name("list_endpoints_for_all_namespaces")
 
-    def events(self):
-        return self.convert_k8s_list_to_dict(self.api_core_v1().list_event_for_all_namespaces().items)
+    def events(self, field_selector=None, label_selector=None):
+        kwargs = {}
+        if field_selector:
+            kwargs['field_selector'] = field_selector
+        if label_selector:
+            kwargs['label_selector'] = label_selector
+        result = self.api_core_v1().list_event_for_all_namespaces(**kwargs)
+        return self.convert_k8s_list_to_dict(result.items)
+
+    def events_for_namespace(self, namespace):
+        return self.api_core_v1().list_namespaced_event()
 
     def limit_range(self):
         return self.api_core_v1().list_limit_range_for_all_namespaces().to_dict()
 
     def namespaces(self):
         return self.api_core_v1().list_namespace()
+
+    def pod_events(self, pod_name):
+        return self.events(field_selector=f'involvedObject.name={pod_name}')
+
+    def pod_logs(self, pod_name, namespace):
+        return self.api_core_v1().read_namespaced_pod_log(name=pod_name, namespace=namespace)
 
     def pods(self):
         return self.call_and_index__core_v1__list__by_metadata_name("list_pod_for_all_namespaces")

@@ -11,17 +11,17 @@ class Pod_Manifest:
         self.containers = self.spec    .get('containers')
 
     def manifest_base(self, kind):
-        return { 'apiVersion' : 'v1'                  ,      # todo refactor into base class (since this common
-                 'kind'      : kind                   ,
-                 'metadata'  : { 'labels'     : {}}   ,
-                 'spec'      : { 'containers' : []   }}
+        return { 'apiVersion' : 'v1'                   ,      # todo refactor into base class (since this common
+                 'kind'      : kind                    ,
+                 'metadata'  : { 'labels'     : {}}    ,
+                 'spec'      : { 'containers' : []     }}
 
     def pod_simple(self, pod_name, image_name):
         return  { 'apiVersion': 'v1'                                       ,
                   'kind'      : 'Pod'                                      ,
                   'metadata'  : { 'name'      : pod_name                } ,
                   'spec'      : { 'containers': [{ 'image': image_name ,
-                                                   'name' : pod_name   }] } }
+                                                   'name' : pod_name   }] }}
 
     def render(self):
         return self.manifest
@@ -29,7 +29,8 @@ class Pod_Manifest:
 
     def add_container(self, image, name=None):
         container = { 'image': image ,
-                      'name' : name or image }
+                      'name' : name or image,
+                      'imagePullPolicy': 'Never'}
         self.containers.append(container)
         return self
 
@@ -41,4 +42,12 @@ class Pod_Manifest:
         if add_random_id:
             name = random_string(prefix=f'{name}-')
         self.metadata['name'] = name
+        return self
+
+    def set_image_pull_policy(self, policy):  # IfNotPresent | Always | Never
+        self.spec['imagePullPolicy'] = policy
+        return self
+
+    def set_restart_policy(self, policy):  # IfNotPresent | Always | Never
+        self.spec['restartPolicy'] = policy
         return self

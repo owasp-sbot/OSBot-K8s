@@ -1,10 +1,12 @@
 from unittest import TestCase
 
+import pytest
+
 from osbot_utils.utils.Dev import pprint
 
 from tests.integration.Create_Multiple_Pods import Create_Multiple_Pods
 
-
+@pytest.mark.skip
 class test_Create_Multiple_Pods(TestCase):
 
     def setUp(self):

@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import pytest
 
-from osbot_k8s.utils.Docker_Desktop_Cluster import DEFAULT_DOCKER_DESKTOP_NAME
+from osbot_k8s.utils.Docker_Desktop_Cluster import DEFAULT_DOCKER_DESKTOP_NAME, DEFAULT_DOCKER_DESKTOP_HOST
 from osbot_utils.utils.Dev import pprint
 from osbot_utils.utils.Yaml import yaml_parse
 from osbot_utils.utils.Files import file_exists
@@ -821,6 +821,36 @@ class test_Cluster_Info(TestCase):
             assert list_set(event) == ['action', 'api_version', 'count', 'event_time', 'first_timestamp', 'involved_object', 'kind', 'last_timestamp', 'message', 'metadata', 'reason', 'related', 'reporting_component', 'reporting_instance', 'series', 'source', 'type']
         assert 'Created container vpnkit-controller' in messages
 
+
+        event = events.pop()                                # get one pod to test the field selector
+        event_pod_name = event.get('metadata').get('name')
+        #event_pod_name = 'hello-world-dpbcjgnl'
+        events_for_pod = self.cluster_info.events(field_selector=f'involvedObject.name={event_pod_name}')
+
+        for event in events_for_pod:
+            involved_object = event.get('involved_object').get('name')
+            assert involved_object == event_pod_name
+
+            #code below was testing the sort and sequence of events. todo: figure out the best way to get the correct order events
+            #when     = event.get('event_time') or event.get('last_timestamp')
+            #when     = event.get('metadata').get('creation_timestamp')
+            #event_id = event.get('metadata').get('name')
+            #message  = event.get('message')
+            #print(when, '  ', message )
+        #    pprint(event)
+
+        # events_for_pod.sort(key = lambda x:x['metadata']['creation_timestamp'])
+        # print('-------')
+        # for event in events_for_pod:
+        #     #when     = event.get('event_time') or event.get('last_timestamp')
+        #     when     = event.get('metadata').get('creation_timestamp')
+        #     event_id = event.get('metadata').get('name')
+        #     message  = event.get('message')
+        #     print(when, '  ', message )
+
+
+        #pprint(events_for_pod)
+
     def test_limit_range(self):
         limit_range =  self.cluster_info.limit_range()
         assert limit_range == {'api_version' : 'v1',
@@ -834,6 +864,24 @@ class test_Cluster_Info(TestCase):
     def test_namespaces(self):
         namespaces = self.cluster_info.namespaces()
         pprint(namespaces)
+
+    def test_pod_events(self):
+        events     = self.cluster_info.events()
+        event      = events.pop()
+        pod_name   = event.get('involved_object').get('name')
+        pod_events = self.cluster_info.pod_events(pod_name=pod_name)
+        for pod_event in pod_events:
+            assert pod_event.get('involved_object').get('name') == pod_name
+            assert pod_event.get('metadata').get('name').startswith(pod_name)
+
+    def test_pod_logs(self):
+        pods      = list(self.cluster_info.pods().values())
+        pod       = pods.pop(0)
+        pod_name  = pod.get('metadata').get('name'     )
+        namespace = pod.get('metadata').get('namespace')
+        logs      = self.cluster_info.pod_logs(pod_name=pod_name, namespace=namespace)
+        assert type(logs) is str
+        assert len(logs) > 0                # todo add a better test with a pod that we know what it is
 
     def test_pods(self):
         pods = self.cluster_info.pods()

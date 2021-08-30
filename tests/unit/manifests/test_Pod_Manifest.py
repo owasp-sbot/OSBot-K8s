@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+import pytest
+
 from osbot_utils.utils.Misc import wait
 
 from osbot_k8s.kubernetes.Cluster import Cluster
@@ -52,6 +54,13 @@ class test_Pod_Manifest(TestCase):
         assert self.metadata == { 'labels'  : {'an':'label' },
                                   'name'    : pod_name      }
 
+    def test_set_image_pull_policy(self):
+        policy = 'IfNotPresent'
+        assert self.spec == {'containers': []}
+        self.pod_manifest.set_image_pull_policy(policy)
+        assert self.spec == {'containers': [], 'imagePullPolicy':policy}
+
+@pytest.mark.skip
 class test_Pod_Manifest__Create_in_K8s(TestCase):
 
     def setUp(self) -> None:
@@ -61,19 +70,43 @@ class test_Pod_Manifest__Create_in_K8s(TestCase):
         name = 'hello-world'
         pod_manifest = (Pod_Manifest().set_name(name)
                                       .add_container('hello-world')
-                                      .add_label('type', name))
+                                      .add_label('type', name)
+                                      .set_image_pull_policy('Never')
+                                      .set_restart_policy('Never')
+                        )
 
         manifest = pod_manifest.render()
-        pprint(manifest)
-        data   = self.cluster.pod_create(manifest)
-        pod    = data.get('pod')
-        result = data.get('result')
-        message = result.get('message')
-        status = result.get('status')
+        data     = self.cluster.pod_create(manifest)
+        pod      = data.get('pod')
+        result   = data.get('result')
+        message  = result.get('message')
+        status   = result.get('status')
         assert message == 'pod created'
         assert status  == 'ok'
-        wait(5)
+
         assert pod.delete().get('message') == 'pod deleted'
+
+        ## misc experiments below
+        # pod.event_wait_for_pod_running()
+        # assert 'Hello from Docker' in pod.logs()
+        # for event in pod.events():
+        #     when = event.get('metadata').get('creation_timestamp')
+        #     message = event.get('message')
+        #     print(f'{when} {message}')
+
+
+
+        # for i in range(0,50):
+        #     pod_manifest = (Pod_Manifest().set_name(name)
+        #                               .add_container('hello-world')
+        #                               .add_label('type', name)
+        #                               .set_image_pull_policy('Never')
+        #                 )
+        #
+        #     manifest = pod_manifest.render()
+        #     data     = self.cluster.pod_create(manifest)
+
+
 
 
 
